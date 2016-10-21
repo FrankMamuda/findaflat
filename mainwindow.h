@@ -33,6 +33,7 @@
 #include <QSettings>
 #include <QStandardItemModel>
 #include "flat.h"
+#include "ui_mainwindow.h"
 
 namespace Ui {
 class MainWindow;
@@ -44,6 +45,7 @@ static const unsigned int DefaultMinFloor = 2;
 static const unsigned int DefaultMinRooms = 1;
 static const unsigned int DefaultMaxRooms = 3;
 static const QString DefaultURL = "https://www.ss.lv/lv/real-estate/flats/riga/centre/rss/";
+static const QString DefaultXML = QDir::currentPath() + "/saved.xml";
 }
 
 /**
@@ -52,21 +54,7 @@ static const QString DefaultURL = "https://www.ss.lv/lv/real-estate/flats/riga/c
 class FlatSortModel : public QSortFilterProxyModel {
 public:
     FlatSortModel( QObject *parent ) : QSortFilterProxyModel( parent ) {}
-    bool lessThan( const QModelIndex &left, const QModelIndex &right ) const {
-        QVariant leftData = this->sourceModel()->data( left );
-        QVariant rightData = sourceModel()->data( right );
-        bool n1, n2;
-        int num1, num2;
-
-        num1 = leftData.toInt( &n1 );
-        num2 = rightData.toInt( &n2 );
-
-        // these must be integers or strings
-        if ( n1 && n2 )
-            return num1 < num2;
-        else
-            return QString::localeAwareCompare( leftData.toString(), rightData.toString()) < 0;
-    }
+    bool lessThan( const QModelIndex &left, const QModelIndex &right ) const;
 };
 
 /**
@@ -76,19 +64,26 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
+    enum Columns {
+        Address = 0,
+        Rooms,
+        Area,
+        Floor,
+        DateTime,
+        Price
+    };
+
     explicit MainWindow( QWidget *parent = 0 );
     ~MainWindow();
-
 
 private slots:
     void replyReceived( QNetworkReply *reply );
     void downloadRSS();
     void parseRSS();
-    //void on_rssView_doubleClicked( const QModelIndex &index) { this->openURL( index ); }
     void clear();
     void check();
     void openURL( const QModelIndex &index );
-    void on_openLinkButton_clicked();
+    void on_openLinkButton_clicked() { this->openURL( this->ui->rssTableView->currentIndex()); }
     void on_actionOpen_triggered();
     void on_actionStore_triggered();
     void on_actionSearch_toggled( bool checked );
@@ -96,44 +91,35 @@ private slots:
     void stopSearch();
     void on_actionClear_triggered();
     void on_resetButton_clicked();
-    void storeListings( const QString &path = QDir::currentPath() + "/saved.xml" );
-    void readListings( const QString &path = QDir::currentPath() + "/saved.xml" );
+    void storeListings( const QString &path = Ui::DefaultXML );
+    void readListings( const QString &path = Ui::DefaultXML );
     void fillHeader();
-    void clearData();
+    void clearData() { this->ui->rssTableView->model()->removeRows( 0, this->ui->rssTableView->model()->rowCount()); }
     void fillData();
-
-    void on_rssTableView_doubleClicked(const QModelIndex &index);
+    void on_rssTableView_doubleClicked( const QModelIndex &index ) { this->openURL( index ); }
 
 private:
-    enum Columns {
-        Address = 0,
-        Rooms,
-        Area,
-        Floor,
-        Price
-    };
-
     Ui::MainWindow *ui;
     QNetworkAccessManager *manager;
     QXmlStreamReader xml;
     QSystemTrayIcon *trayIcon;
-    //FlatListModel *flatViewModel;
     QTimer *timer;
+    int m_lock;
 
     // getters
-    int priceMin() const;
-    int priceMax() const;
-    int areaMin() const;
-    int areaMax() const;
-    int floorMin() const;
-    int roomsMin() const;
-    int roomsMax() const;
-    int m_lock;
+    int priceMin() const { return this->ui->valueMinPrice->value(); }
+    int priceMax() const { return this->ui->valueMaxPrice->value(); }
+    int areaMin() const { return this->ui->valueMinArea->value(); }
+    int areaMax() const { return this->ui->valueMaxArea->value(); }
+    int floorMin() const { return this->ui->valueFloor->value(); }
+    int roomsMin() const { return this->ui->valueMinRooms->value(); }
+    int roomsMax() const { return this->ui->valueMaxRooms->value(); }
 
     // table
     QStringList columnHeaders;
     QStandardItemModel *modelPtr;
     FlatSortModel *proxyModel;
+
 };
 
 #endif // MAINWINDOW_H

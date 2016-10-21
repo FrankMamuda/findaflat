@@ -24,13 +24,6 @@
 #include <QDebug>
 
 /**
- * @brief Flat::Flat
- * @param parent
- */
-Flat::Flat( QObject *parent ) : QObject( parent ), m_rooms( 0 ), m_price( 0 ), m_area( 0 ), m_floor( 0 ), m_floor_total( 0 ) {
-}
-
-/**
  * @brief Flat::readData
  * @param input
  * @param pattern

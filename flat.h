@@ -23,6 +23,7 @@
 // includes
 //
 #include <QObject>
+#include <QDateTime>
 
 /**
  * @brief The Flat class
@@ -31,8 +32,7 @@ class Flat : public QObject {
     Q_OBJECT
 
 public:
-    explicit Flat( QObject *parent = 0 );
-
+    explicit Flat( QObject *parent = 0 ) : QObject( parent ), m_rooms( 0 ), m_price( 0 ), m_area( 0 ), m_floor( 0 ), m_floor_total( 0 ) { }
     int rooms() const { return this->m_rooms; }
     int price() const { return this->m_price; }
     int pricePerSquare() const { return this->m_price / this->m_area; }
@@ -42,6 +42,7 @@ public:
     QString description() const { return this->m_description; }
     QString link() const { return this->m_link; }
     QString address() const { return this->m_address; }
+    QDateTime dateTime() const { return this->m_dateTime; }
 
 signals:
 
@@ -54,6 +55,7 @@ public slots:
     void setDescription( const QString &description ) { this->m_description = description; }
     void setLink( const QString &link ) { this->m_link = link; }
     void setAddress( const QString &address ) { this->m_address = address; }
+    void setDateTime( const QDateTime &dateTime ) { this->m_dateTime = dateTime; }
     void parseRawXML( const QString &data );
 
 private:
@@ -65,6 +67,7 @@ private:
     QString m_description;
     QString m_link;
     QString m_address;
+    QDateTime m_dateTime;
     QVariant readData( const QString &data, const QString &pattern ) const;
 };
 

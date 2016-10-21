@@ -42,6 +42,7 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
                            this->tr( "Istabas" ) <<
                            this->tr( "Platība" ) <<
                            this->tr( "Stāvs" ) <<
+                           this->tr( "Datums" ) <<
                            this->tr( "Cena" );
 
     // set up ranking view
@@ -57,15 +58,8 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     this->ui->rssTableView->setModel( this->proxyModel );
     this->ui->rssTableView->setWordWrap( true );
 
-    // set stats
+    // fill header
     this->fillHeader();
-    this->fillData();
-    this->proxyModel->sort( Price, Qt::DescendingOrder );
-
-    // set up view
-    /*this->flatViewModel = new FlatListModel( this );
-    this->ui->rssView->setModel( this->flatViewModel );
-    this->ui->rssView->setAlternatingRowColors( true );*/
 
     // set up tray
     QIcon icon( ":/icons/icon" );
@@ -94,14 +88,6 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
 
     // unlock vars
     this->m_lock = false;
-}
-
-
-/**
- * @brief Gui_Rankings::clearData
- */
-void MainWindow::clearData() {
-    this->ui->rssTableView->model()->removeRows( 0, this->ui->rssTableView->model()->rowCount());
 }
 
 /**
@@ -159,6 +145,10 @@ void MainWindow::fillData() {
                 text = QString( "%1" ).arg( flat->price());
                 break;
 
+            case DateTime:
+                text = flat->dateTime().toString( "MMM dd hh:mm" );
+                break;
+
             default:
                 break;
             }
@@ -207,6 +197,7 @@ void MainWindow::parseRSS() {
     QString tag;
     QString link;
     QString title;
+    QString date;
     QString description;
     Flat *flat;
     int count = 0;
@@ -229,6 +220,15 @@ void MainWindow::parseRSS() {
                 flat->parseRawXML( description );
                 flat->setLink( link );
                 flat->setDescription( title );
+
+                // (\\d{1,2}\\s+(?:Jan?|Feb?|Mar?|Apr?|May|Jun?|Jul?|Aug?|Sep?|Oct?|Nov?|Dec?)\\s+\\d{4})\\s(\\d{2}:\\d{2}:\\d{2})
+
+                QDateTime dateTime;
+                date = date.mid( 5, 20 );
+                QLocale locale( QLocale::English, QLocale::UnitedStates );
+                dateTime = locale.toDateTime( date, "dd MMM yyyy hh:mm:ss" );
+                flat->setDateTime( dateTime );
+                //qDebug() << dateTime.toString( "MMM dd hh:mm" );
 
                 // apply filters
                 if ( flat->floor() < this->floorMin() ||
@@ -259,6 +259,8 @@ void MainWindow::parseRSS() {
                 title = this->xml.text().toString();
             else if ( tag == "link" )
                 link = this->xml.text().toString();
+            else if ( tag == "pubDate" )
+                date = this->xml.text().toString();
             else if ( tag == "description" )
                 description = this->xml.text().toString();
         }
@@ -273,6 +275,7 @@ void MainWindow::parseRSS() {
         // update table
         this->clearData();
         this->fillData();
+        this->proxyModel->sort( DateTime, Qt::AscendingOrder );
     }
 }
 
@@ -347,62 +350,6 @@ void MainWindow::clear() {
 }
 
 /**
- * @brief MainWindow::priceMin
- * @return
- */
-int MainWindow::priceMin() const {
-    return this->ui->valueMinPrice->value();
-}
-
-/**
- * @brief MainWindow::priceMax
- * @return
- */
-int MainWindow::priceMax() const {
-    return this->ui->valueMaxPrice->value();
-}
-
-/**
- * @brief MainWindow::areaMin
- * @return
- */
-int MainWindow::areaMin() const {
-    return this->ui->valueMinArea->value();
-}
-
-/**
- * @brief MainWindow::areaMax
- * @return
- */
-int MainWindow::areaMax() const {
-    return this->ui->valueMaxArea->value();
-}
-
-/**
- * @brief MainWindow::floorMin
- * @return
- */
-int MainWindow::floorMin() const {
-    return this->ui->valueFloor->value();
-}
-
-/**
- * @brief MainWindow::roomsMin
- * @return
- */
-int MainWindow::roomsMin() const {
-    return this->ui->valueMinRooms->value();
-}
-
-/**
- * @brief MainWindow::roomsMax
- * @return
- */
-int MainWindow::roomsMax() const {
-    return this->ui->valueMaxRooms->value();
-}
-
-/**
  * @brief MainWindow::check
  */
 void MainWindow::check() {
@@ -424,13 +371,6 @@ void MainWindow::check() {
 
     if ( max < min )
         this->ui->valueMaxRooms->setValue( min );
-}
-
-/**
- * @brief MainWindow::on_openLinkButton_clicked
- */
-void MainWindow::on_openLinkButton_clicked() {
-    this->openURL( this->ui->rssTableView->currentIndex());
 }
 
 /**
@@ -497,7 +437,7 @@ void MainWindow::storeListings( const QString &path ) {
         xmlFile.write( "<flats version=\"1.0\">\n" );
 
         foreach ( Flat *flat, m.flatList ) {
-            xmlFile.write( QString( "<flat rooms=\"%1\" price=\"%2\" area=\"%3\" floor=\"%4\" total=\"%5\" description=\"%6\" link=\"%7\" address=\"%8\" />\n" )
+            xmlFile.write( QString( "<flat rooms=\"%1\" price=\"%2\" area=\"%3\" floor=\"%4\" total=\"%5\" description=\"%6\" link=\"%7\" address=\"%8\" date=\"%9\" />\n" )
                            .arg( flat->rooms())
                            .arg( flat->price())
                            .arg( flat->area())
@@ -505,7 +445,8 @@ void MainWindow::storeListings( const QString &path ) {
                            .arg( flat->totalFloors())
                            .arg( flat->description())
                            .arg( flat->link())
-                           .arg( flat->address()).toUtf8()
+                           .arg( flat->address())
+                           .arg( flat->dateTime().toString( "dd.MM.yyyy hh:mm" )).toUtf8()
                            );
         }
 
@@ -538,6 +479,7 @@ void MainWindow::readListings( const QString &path ) {
                         flat->setDescription( xml.attributes().value( "description" ).toString());
                         flat->setLink( xml.attributes().value( "link" ).toString());
                         flat->setAddress( xml.attributes().value( "address" ).toString());
+                        flat->setDateTime( QDateTime::fromString( xml.attributes().value( "date" ).toString(), "dd.MM.yyyy hh:mm" ));
 
                         // check for duplicates
                         bool found = false;
@@ -560,6 +502,7 @@ void MainWindow::readListings( const QString &path ) {
         // table
         this->clearData();
         this->fillData();
+        this->proxyModel->sort( DateTime, Qt::AscendingOrder );
 
         // close file
         xmlFile.close();
@@ -567,9 +510,36 @@ void MainWindow::readListings( const QString &path ) {
 }
 
 /**
- * @brief MainWindow::on_rssTableView_doubleClicked
- * @param index
+ * @brief FlatSortModel::lessThan
+ * @param left
+ * @param right
+ * @return
  */
-void MainWindow::on_rssTableView_doubleClicked( const QModelIndex &index ) {
-    this->openURL( index );
+bool FlatSortModel::lessThan( const QModelIndex &left, const QModelIndex &right ) const {
+    QVariant leftData = this->sourceModel()->data( left );
+    QVariant rightData = this->sourceModel()->data( right );
+    bool n1, n2;
+    int num1, num2;
+
+    if ( left.column() == MainWindow::DateTime ) {
+        int leftId = this->sourceModel()->data( left, Qt::UserRole ).toInt();
+        int rightId = this->sourceModel()->data( right, Qt::UserRole ).toInt();
+
+        if ( leftId >= 0 && leftId < m.flatList.count() && rightId >= 0 && rightId < m.flatList.count()) {
+            Flat *leftFlat = m.flatList.at( leftId );
+            Flat *rightFlat = m.flatList.at( rightId );
+
+            if ( leftFlat != NULL && rightFlat != NULL )
+                return leftFlat->dateTime() < rightFlat->dateTime();
+        }
+    }
+
+    num1 = leftData.toInt( &n1 );
+    num2 = rightData.toInt( &n2 );
+
+    // these must be integers or strings
+    if ( n1 && n2 )
+        return num1 < num2;
+    else
+        return QString::localeAwareCompare( leftData.toString(), rightData.toString()) < 0;
 }
