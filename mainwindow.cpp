@@ -61,6 +61,11 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     // fill header
     this->fillHeader();
 
+    // set up filter list
+    this->filterModel = new FilterModel( this );
+    this->ui->filterView->setModel( this->filterModel );
+    this->ui->filterView->setAlternatingRowColors( true );
+
     // set up tray
     QIcon icon( ":/icons/icon" );
     this->trayIcon = new QSystemTrayIcon( icon, this );
@@ -79,6 +84,14 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     this->ui->valueMinRooms->setValue( m.settings->value( "filter/minRooms", Ui::DefaultMinRooms ).toInt());
     this->ui->valueMaxRooms->setValue( m.settings->value( "filter/maxRooms", Ui::DefaultMaxRooms ).toInt());
     this->ui->urlRSS->setText( m.settings->value( "filter/url", Ui::DefaultURL ).toString());
+
+    // read filters
+    int y, count = m.settings->value( "filter/numFilters", 0 ).toInt();
+    for ( y = 0; y < count; y++ ) {
+        Filter *filter = Filter::fromString( m.settings->value( QString( "filter/filter_%1" ).arg( y )).toString());
+        if ( filter != NULL )
+            m.filterList << filter;
+    }
 
     // read previous listings
     this->readListings();
@@ -183,11 +196,25 @@ MainWindow::~MainWindow() {
     m.settings->setValue( "filter/maxRooms", this->roomsMax());
     m.settings->setValue( "filter/url", this->ui->urlRSS->text());
 
+    // store filters
+    int count = 0;
+    foreach ( Filter *filter, m.filterList ) {
+        m.settings->setValue( QString( "filter/filter_%1" ).arg( count ), filter->settingsString());
+        count++;
+        delete filter;
+    }
+    m.settings->setValue( "filter/numFilters", count );
+
     // delete ui & other stuff
     delete this->timer;
     delete this->trayIcon;
+    delete this->filterModel;
     delete ui;
     delete m.settings;
+
+    // clear listings
+    foreach ( Flat *flat, m.flatList )
+        delete flat;
 }
 
 /**
@@ -230,17 +257,24 @@ void MainWindow::parseRSS() {
                 flat->setDateTime( dateTime );
                 //qDebug() << dateTime.toString( "MMM dd hh:mm" );
 
+                bool ok = false;
+                foreach ( Filter *filter, m.filterList ) {
+                    if ( flat->floor() >= filter->floorMin() &&
+                         flat->area() >= filter->areaMin() &&
+                         flat->area() <= filter->areaMax() &&
+                         flat->price() >= filter->priceMin() &&
+                         flat->price() <= filter->priceMax() &&
+                         flat->rooms() >= filter->roomsMin() &&
+                         flat->rooms() <= filter->roomsMax()) {
+                        ok = true;
+                        break;
+                    }
+                }
+
                 // apply filters
-                if ( flat->floor() < this->floorMin() ||
-                     flat->area() < this->areaMin() ||
-                     flat->area() > this->areaMax() ||
-                     flat->price() < this->priceMin() ||
-                     flat->price() > this->priceMax() ||
-                     flat->rooms() < this->roomsMin() ||
-                     flat->rooms() > this->roomsMax()
-                     )
+                if ( !ok ) {
                     delete flat;
-                else {
+                } else {
                     // check for duplicates
                     bool found = false;
                     foreach ( Flat *flatPtr, m.flatList ) {
@@ -269,7 +303,14 @@ void MainWindow::parseRSS() {
     // only report if new listings found
     if ( count > 0 ) {
         qDebug() << QString( "%1: %2 new listings found" ).arg( QTime::currentTime().toString( "HH:mm:ss" )).arg( count );
-        this->trayIcon->showMessage( "FindAFlat", QString( "%1 new listings found" ).arg( count ), QSystemTrayIcon::Information );
+        //this->trayIcon->showMessage( "FindAFlat", QString( "%1 new listing(s) found" ).arg( count ), QSystemTrayIcon::Information );
+        QString num = QString( "%1" ).arg( count );
+
+        if ( num.endsWith( "1" ))
+            this->trayIcon->showMessage( "FindAFlat", QString( "%1 jauns sludinājums atrasts" ).arg( count ), QSystemTrayIcon::Information );
+        else
+            this->trayIcon->showMessage( "FindAFlat", QString( "%1 jauni sludinājumi atrasti" ).arg( count ), QSystemTrayIcon::Information );
+
         this->show();
 
         // update table
@@ -303,6 +344,9 @@ void MainWindow::replyReceived( QNetworkReply *networkReply ) {
         this->parseRSS();
     }
 
+    // update statusbar
+    this->statusBar()->showMessage( this->tr( "Notiek meklēšana (%1)" ).arg( QTime::currentTime().toString( "HH:mm:ss" )));
+
     networkReply->deleteLater();
 }
 
@@ -330,7 +374,6 @@ void MainWindow::startSearch() {
     // begin polling every minute
     this->downloadRSS();
     this->timer->start( 60000 );
-    this->statusBar()->showMessage( this->tr( "Notiek meklēšana" ));
 }
 
 /**
@@ -542,4 +585,39 @@ bool FlatSortModel::lessThan( const QModelIndex &left, const QModelIndex &right 
         return num1 < num2;
     else
         return QString::localeAwareCompare( leftData.toString(), rightData.toString()) < 0;
+}
+
+/**
+ * @brief MainWindow::on_addButton_clicked
+ */
+void MainWindow::on_addButton_clicked() {
+    this->filterModel->beginReset();
+    m.filterList << new Filter( this->priceMin(), this->priceMax(), this->areaMin(), this->areaMax(), this->floorMin(), this->roomsMin(), this->roomsMax());
+    this->filterModel->endReset();
+}
+
+/**
+ * @brief MainWindow::on_removeButton_clicked
+ */
+void MainWindow::on_removeButton_clicked() {
+    this->filterModel->beginReset();
+    int row = this->ui->filterView->currentIndex().row();
+
+    if ( row >=0 && row < m.filterList.count()) {
+        Filter *filter = m.filterList.takeAt( this->ui->filterView->currentIndex().row());
+        delete filter;
+    }
+
+    this->filterModel->endReset();
+}
+
+/**
+ * @brief MainWindow::on_removeAllButton_clicked
+ */
+void MainWindow::on_removeAllButton_clicked(){
+    this->filterModel->beginReset();
+    foreach ( Filter *filter, m.filterList )
+        delete filter;
+    m.filterList.clear();
+    this->filterModel->endReset();
 }

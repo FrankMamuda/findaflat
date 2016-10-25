@@ -16,31 +16,27 @@
  *
  */
 
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef FILTERMODEL_H
+#define FILTERMODEL_H
 
 //
 // includes
 //
-#include <QList>
-#include "flat.h"
-#include "filter.h"
-#include <QSettings>
+#include <QStringListModel>
+#include "main.h"
 
 /**
- * @brief The Main class
+ * @brief The FilterModel class
  */
-class Main {
+class FilterModel : public QStringListModel {
+    Q_OBJECT
 
 public:
-    QList <Flat*> flatList;
-    QList <Filter*> filterList;
-    QSettings *settings;
+    FilterModel( QObject *parentPtr = 0 ) : QStringListModel( parentPtr ) {}
+    int rowCount( const QModelIndex & = QModelIndex()) const { return m.filterList.count(); }
+    QVariant data( const QModelIndex &, int ) const;
+    void beginReset() { this->beginResetModel(); }
+    void endReset() { this->endResetModel(); }
 };
 
-//
-// externals
-//
-extern class Main m;
-
-#endif // MAIN_H
+#endif // GUI_TASKLISTMODEL_H

@@ -5,11 +5,15 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    flat.cpp
+    flat.cpp \
+    filter.cpp \
+    filtermodel.cpp
 
 HEADERS  += mainwindow.h \
     flat.h \
-    main.h
+    main.h \
+    filter.h \
+    filtermodel.h
 
 FORMS    += mainwindow.ui
 

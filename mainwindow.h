@@ -33,6 +33,7 @@
 #include <QSettings>
 #include <QStandardItemModel>
 #include "flat.h"
+#include "filtermodel.h"
 #include "ui_mainwindow.h"
 
 namespace Ui {
@@ -97,6 +98,9 @@ private slots:
     void clearData() { this->ui->rssTableView->model()->removeRows( 0, this->ui->rssTableView->model()->rowCount()); }
     void fillData();
     void on_rssTableView_doubleClicked( const QModelIndex &index ) { this->openURL( index ); }
+    void on_addButton_clicked();
+    void on_removeButton_clicked();
+    void on_removeAllButton_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -119,7 +123,7 @@ private:
     QStringList columnHeaders;
     QStandardItemModel *modelPtr;
     FlatSortModel *proxyModel;
-
+    FilterModel *filterModel;
 };
 
 #endif // MAINWINDOW_H
