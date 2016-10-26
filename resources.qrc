@@ -5,5 +5,16 @@
         <file alias="find">find.png</file>
         <file alias="open">open.png</file>
         <file alias="save">save.png</file>
+        <file alias="browser">browser.png</file>
+        <file alias="configure">configure.png</file>
+        <file alias="filter">filter.png</file>
+        <file alias="insert">insert.png</file>
+        <file alias="remove">remove.png</file>
+        <file alias="results">results.png</file>
+        <file alias="revert">revert.png</file>
+        <file alias="rss">rss.png</file>
+    </qresource>
+    <qresource prefix="/i18n">
+        <file alias="lv_LV">i18n_lv_LV.qm</file>
     </qresource>
 </RCC>

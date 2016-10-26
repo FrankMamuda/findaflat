@@ -19,17 +19,17 @@
 //
 // includes
 //
-#include "flat.h"
+#include "listing.h"
 #include <QStringList>
 #include <QDebug>
 
 /**
- * @brief Flat::readData
+ * @brief Listing::readData
  * @param input
  * @param pattern
  * @return
  */
-QVariant Flat::readData( const QString &data, const QString &pattern ) const {
+QVariant Listing::readData( const QString &data, const QString &pattern ) const {
     QStringList list;
     QRegExp rx( pattern );
     int pos = 0;
@@ -45,10 +45,10 @@ QVariant Flat::readData( const QString &data, const QString &pattern ) const {
 }
 
 /**
- * @brief Flat::parseRawXML
+ * @brief Listing::parseRawXML
  * @param data
  */
-void Flat::parseRawXML( const QString &data ) {
+void Listing::parseRawXML( const QString &data ) {
     QString simplified;
 
     // simplify xml

@@ -23,11 +23,18 @@
 #include "main.h"
 #include <QApplication>
 #include <QLoggingCategory>
+#include <QTranslator>
+//#include <QDebug>
 
 //
 // classes
 //
 class Main m;
+
+//
+// defines
+//
+#define FORCE_LATVIAN
 
 /**
  * @brief qMain
@@ -40,6 +47,17 @@ int main( int argc, char *argv[] ) {
 
     // set up settings
     m.settings = new QSettings( "Avotu Briezhaudzetava", "FindAFlat" );
+
+    // set up translator
+    QTranslator translator;
+    QString locale;
+#ifndef FORCE_LATVIAN
+    locale = QLocale::system().name();
+#else
+    locale = "lv_LV";
+#endif
+    translator.load( ":/i18n/" + locale );
+    app.installTranslator( &translator );
 
     // set up gui
     MainWindow gui;

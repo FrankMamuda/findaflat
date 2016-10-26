@@ -38,25 +38,30 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
 
     // define column headers here for now (required for proper translations)
     this->columnHeaders <<
-                           this->tr( "Adrese" ) <<
-                           this->tr( "Istabas" ) <<
-                           this->tr( "Platība" ) <<
-                           this->tr( "Stāvs" ) <<
-                           this->tr( "Datums" ) <<
-                           this->tr( "Cena" );
+                           this->tr( "Address" ) <<
+                           this->tr( "Rooms" ) <<
+                           this->tr( "Area" ) <<
+                           this->tr( "Floor" ) <<
+                           this->tr( "Date" ) <<
+                           this->tr( "Price" );
 
     // set up ranking view
     this->ui->rssTableView->setEditTriggers( QAbstractItemView::NoEditTriggers );
     this->ui->rssTableView->setSortingEnabled( true );
 
     // set up sorting & view model
-    this->proxyModel = new FlatSortModel( this );
-    this->modelPtr = new QStandardItemModel( m.flatList.count(), this->columnHeaders.count(), this );
+    this->proxyModel = new ListingSortModel( this );
+    this->modelPtr = new QStandardItemModel( m.listingList.count(), this->columnHeaders.count(), this );
     this->proxyModel->setSourceModel( this->modelPtr );
     this->proxyModel->setDynamicSortFilter( true );
     this->ui->rssTableView->verticalHeader()->hide();
     this->ui->rssTableView->setModel( this->proxyModel );
     this->ui->rssTableView->setWordWrap( true );
+
+    // set up tabs
+    this->ui->tabWidget->setTabIcon( 0, QIcon( ":/icons/results" ));
+    this->ui->tabWidget->setTabIcon( 1, QIcon( ":/icons/configure" ));
+    this->ui->tabWidget->setTabIcon( 2, QIcon( ":/icons/filter" ));
 
     // fill header
     this->fillHeader();
@@ -97,7 +102,7 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     this->readListings();
 
     // report
-    this->statusBar()->showMessage( this->tr( "Meklēšana nav uzsākta" ));
+    this->statusBar()->showMessage( this->tr( "Search has not been started" ));
 
     // unlock vars
     this->m_lock = false;
@@ -129,37 +134,37 @@ void MainWindow::fillData() {
 
     // fill data
     for ( y = 0; y < this->columnHeaders.count(); y++ ) {
-        for ( k = 0; k < m.flatList.count(); k++ ) {
-            Flat *flat = m.flatList.at( k );
+        for ( k = 0; k < m.listingList.count(); k++ ) {
+            Listing *listing = m.listingList.at( k );
             QStandardItem *item = new QStandardItem();
             QString text;
 
-            if ( flat == NULL )
+            if ( listing == NULL )
                 return;
 
             switch ( y ) {
             case Address:
-                text = flat->address();
+                text = listing->address();
                 break;
 
             case Rooms:
-                text = QString( "%1" ).arg( flat->rooms());
+                text = QString( "%1" ).arg( listing->rooms());
                 break;
 
             case Area:
-                text = QString( "%1" ).arg( flat->area());
+                text = QString( "%1" ).arg( listing->area());
                 break;
 
             case Floor:
-                text = QString( "%1" ).arg( flat->floor());
+                text = QString( "%1" ).arg( listing->floor());
                 break;
 
             case Price:
-                text = QString( "%1" ).arg( flat->price());
+                text = QString( "%1" ).arg( listing->price());
                 break;
 
             case DateTime:
-                text = flat->dateTime().toString( "MMM dd hh:mm" );
+                text = listing->dateTime().toString( "MMM dd hh:mm" );
                 break;
 
             default:
@@ -169,7 +174,7 @@ void MainWindow::fillData() {
             // make it centred
             item->setData( Qt::AlignCenter, Qt::TextAlignmentRole );
             item->setText( text );
-            item->setData( m.flatList.indexOf( flat ), Qt::UserRole );
+            item->setData( m.listingList.indexOf( listing ), Qt::UserRole );
             this->modelPtr->setItem( k, y, item );
         }
     }
@@ -213,8 +218,8 @@ MainWindow::~MainWindow() {
     delete m.settings;
 
     // clear listings
-    foreach ( Flat *flat, m.flatList )
-        delete flat;
+    foreach ( Listing *listing, m.listingList )
+        delete listing;
 }
 
 /**
@@ -226,11 +231,11 @@ void MainWindow::parseRSS() {
     QString title;
     QString date;
     QString description;
-    Flat *flat;
+    Listing *listing;
     int count = 0;
 
     // announce
-    qDebug() << QString( "%1: parsing RSS from %2" ).arg( QTime::currentTime().toString( "HH:mm:ss" )).arg( this->ui->urlRSS->text());
+    //qDebug() << QString( "%1: parsing RSS from %2" ).arg( QTime::currentTime().toString( "HH:mm:ss" )).arg( this->ui->urlRSS->text());
 
     while ( !this->xml.atEnd()) {
         this->xml.readNext();
@@ -238,34 +243,34 @@ void MainWindow::parseRSS() {
         if ( this->xml.isStartElement()) {
             if ( this->xml.name() == "item" ) {
                 if ( !title.isEmpty())
-                    flat = new Flat();
+                    listing = new Listing();
             }
             tag = this->xml.name().toString();
         } else if( this->xml.isEndElement()) {
             if ( this->xml.name() == "item" ) {
+                bool ok = false;
+
                 // read listing info
-                flat->parseRawXML( description );
-                flat->setLink( link );
-                flat->setDescription( title );
+                listing->parseRawXML( description );
+                listing->setLink( link );
+                listing->setDescription( title );
 
-                // (\\d{1,2}\\s+(?:Jan?|Feb?|Mar?|Apr?|May|Jun?|Jul?|Aug?|Sep?|Oct?|Nov?|Dec?)\\s+\\d{4})\\s(\\d{2}:\\d{2}:\\d{2})
-
+                // parse pubDate tag
                 QDateTime dateTime;
                 date = date.mid( 5, 20 );
                 QLocale locale( QLocale::English, QLocale::UnitedStates );
                 dateTime = locale.toDateTime( date, "dd MMM yyyy hh:mm:ss" );
-                flat->setDateTime( dateTime );
-                //qDebug() << dateTime.toString( "MMM dd hh:mm" );
+                listing->setDateTime( dateTime );
 
-                bool ok = false;
+                // must match at least one filter
                 foreach ( Filter *filter, m.filterList ) {
-                    if ( flat->floor() >= filter->floorMin() &&
-                         flat->area() >= filter->areaMin() &&
-                         flat->area() <= filter->areaMax() &&
-                         flat->price() >= filter->priceMin() &&
-                         flat->price() <= filter->priceMax() &&
-                         flat->rooms() >= filter->roomsMin() &&
-                         flat->rooms() <= filter->roomsMax()) {
+                    if ( listing->floor() >= filter->floorMin() &&
+                         listing->area() >= filter->areaMin() &&
+                         listing->area() <= filter->areaMax() &&
+                         listing->price() >= filter->priceMin() &&
+                         listing->price() <= filter->priceMax() &&
+                         listing->rooms() >= filter->roomsMin() &&
+                         listing->rooms() <= filter->roomsMax()) {
                         ok = true;
                         break;
                     }
@@ -273,17 +278,17 @@ void MainWindow::parseRSS() {
 
                 // apply filters
                 if ( !ok ) {
-                    delete flat;
+                    delete listing;
                 } else {
                     // check for duplicates
                     bool found = false;
-                    foreach ( Flat *flatPtr, m.flatList ) {
-                        if ( !QString::compare( flatPtr->link(), flat->link()))
+                    foreach ( Listing *listingPtr, m.listingList ) {
+                        if ( !QString::compare( listingPtr->link(), listing->link()))
                             found = true;
                     }
 
                     if ( !found ) {
-                        m.flatList << flat;
+                        m.listingList << listing;
                         count++;
                     }
                 }
@@ -302,16 +307,15 @@ void MainWindow::parseRSS() {
 
     // only report if new listings found
     if ( count > 0 ) {
-        qDebug() << QString( "%1: %2 new listings found" ).arg( QTime::currentTime().toString( "HH:mm:ss" )).arg( count );
-        //this->trayIcon->showMessage( "FindAFlat", QString( "%1 new listing(s) found" ).arg( count ), QSystemTrayIcon::Information );
         QString num = QString( "%1" ).arg( count );
 
         if ( num.endsWith( "1" ))
-            this->trayIcon->showMessage( "FindAFlat", QString( "%1 jauns sludinājums atrasts" ).arg( count ), QSystemTrayIcon::Information );
+            this->trayIcon->showMessage( this->tr( "FindAFlat" ), this->tr( "%1 new listing found" ).arg( count ), QSystemTrayIcon::Information );
         else
-            this->trayIcon->showMessage( "FindAFlat", QString( "%1 jauni sludinājumi atrasti" ).arg( count ), QSystemTrayIcon::Information );
+            this->trayIcon->showMessage( this->tr( "FindAFlat" ), this->tr( "%1 new listings found" ).arg( count ), QSystemTrayIcon::Information );
 
-        this->show();
+        // raise window
+        this->setWindowState( Qt::WindowActive );
 
         // update table
         this->clearData();
@@ -345,8 +349,9 @@ void MainWindow::replyReceived( QNetworkReply *networkReply ) {
     }
 
     // update statusbar
-    this->statusBar()->showMessage( this->tr( "Notiek meklēšana (%1)" ).arg( QTime::currentTime().toString( "HH:mm:ss" )));
+    this->statusBar()->showMessage( this->tr( "Search in progress (%1)" ).arg( QTime::currentTime().toString( "HH:mm:ss" )));
 
+    // clean up
     networkReply->deleteLater();
 }
 
@@ -355,14 +360,19 @@ void MainWindow::replyReceived( QNetworkReply *networkReply ) {
  * @param index
  */
 void MainWindow::openURL( const QModelIndex &index ) {
-    int id = this->proxyModel->data( index, Qt::UserRole ).toInt();
+    int id;
+    Listing *listing;
 
-    if ( id < 0 || id >= m.flatList.count())
+    // get listing id
+    id = this->proxyModel->data( index, Qt::UserRole ).toInt();
+
+    // failsafe
+    if ( id < 0 || id >= m.listingList.count())
         return;
 
-    Flat *flat = m.flatList.at( id );
-    if ( flat != NULL )
-        QDesktopServices::openUrl( QUrl( flat->link()));
+    listing = m.listingList.at( id );
+    if ( &listing != NULL )
+        QDesktopServices::openUrl( QUrl( listing->link()));
 }
 
 /**
@@ -381,14 +391,14 @@ void MainWindow::startSearch() {
  */
 void MainWindow::stopSearch() {
     this->timer->stop();
-    this->statusBar()->showMessage( this->tr( "Meklēšana pārtraukta" ));
+    this->statusBar()->showMessage( this->tr( "Search discontinued" ));
 }
 
 /**
  * @brief MainWindow::clear
  */
 void MainWindow::clear() {
-    m.flatList.clear();
+    m.listingList.clear();
     this->clearData();
 }
 
@@ -420,7 +430,7 @@ void MainWindow::check() {
  * @brief MainWindow::on_actionOpen_triggered
  */
 void MainWindow::on_actionOpen_triggered() {
-    QString filename = QFileDialog::getOpenFileName( this, this->tr( "Select XML" ), QDir::currentPath(), this->tr( "FindAFlat XML (*.xml)" ));
+    QString filename = QFileDialog::getOpenFileName( this, this->tr( "Select XML" ), QDir::currentPath(), this->tr( "XML listings (*.xml)" ));
     if ( !filename.isEmpty())
         this->readListings( filename );
 }
@@ -429,7 +439,7 @@ void MainWindow::on_actionOpen_triggered() {
  * @brief MainWindow::on_actionStore_triggered
  */
 void MainWindow::on_actionStore_triggered() {
-    QString filename = QFileDialog::getSaveFileName( this, this->tr( "Select XML" ), QDir::currentPath(), this->tr( "FindAFlat XML (*.xml)" ));
+    QString filename = QFileDialog::getSaveFileName( this, this->tr( "Select XML" ), QDir::currentPath(), this->tr( "XML listings (*.xml)" ));
     if ( !filename.isEmpty())
         this->storeListings( filename );
 }
@@ -477,23 +487,23 @@ void MainWindow::on_resetButton_clicked() {
 void MainWindow::storeListings( const QString &path ) {
     QFile xmlFile( path );
     if ( xmlFile.open( QFile::ReadWrite | QFile::Truncate )) {
-        xmlFile.write( "<flats version=\"1.0\">\n" );
+        xmlFile.write( "<listings version=\"1.0\">\n" );
 
-        foreach ( Flat *flat, m.flatList ) {
-            xmlFile.write( QString( "<flat rooms=\"%1\" price=\"%2\" area=\"%3\" floor=\"%4\" total=\"%5\" description=\"%6\" link=\"%7\" address=\"%8\" date=\"%9\" />\n" )
-                           .arg( flat->rooms())
-                           .arg( flat->price())
-                           .arg( flat->area())
-                           .arg( flat->floor())
-                           .arg( flat->totalFloors())
-                           .arg( flat->description())
-                           .arg( flat->link())
-                           .arg( flat->address())
-                           .arg( flat->dateTime().toString( "dd.MM.yyyy hh:mm" )).toUtf8()
+        foreach ( Listing *listing, m.listingList ) {
+            xmlFile.write( QString( "<listing rooms=\"%1\" price=\"%2\" area=\"%3\" floor=\"%4\" total=\"%5\" description=\"%6\" link=\"%7\" address=\"%8\" date=\"%9\" />\n" )
+                           .arg( listing->rooms())
+                           .arg( listing->price())
+                           .arg( listing->area())
+                           .arg( listing->floor())
+                           .arg( listing->totalFloors())
+                           .arg( listing->description())
+                           .arg( listing->link())
+                           .arg( listing->address())
+                           .arg( listing->dateTime().toString( "dd.MM.yyyy hh:mm" )).toUtf8()
                            );
         }
 
-        xmlFile.write( "</flats>\n" );
+        xmlFile.write( "</listings>\n" );
         xmlFile.close();
     }
 }
@@ -507,32 +517,33 @@ void MainWindow::readListings( const QString &path ) {
         QXmlStreamReader xml;
         xml.addData( xmlFile.readAll());
 
+        // clear table before adding new entries
         this->clear();
 
         if ( xml.readNextStartElement()) {
-            if ( xml.name() == "flats" && xml.attributes().value( "version" ) == "1.0" ) {
+            if ( xml.name() == "listings" && xml.attributes().value( "version" ) == "1.0" ) {
                 while ( xml.readNextStartElement()) {
-                    if ( xml.name() == "flat" ) {
-                        Flat *flat = new Flat();
-                        flat->setRooms( xml.attributes().value( "rooms" ).toInt());
-                        flat->setPrice( xml.attributes().value( "price" ).toInt());
-                        flat->setArea( xml.attributes().value( "area" ).toInt());
-                        flat->setFloor( xml.attributes().value( "floor" ).toInt());
-                        flat->setTotalFloors( xml.attributes().value( "total" ).toInt());
-                        flat->setDescription( xml.attributes().value( "description" ).toString());
-                        flat->setLink( xml.attributes().value( "link" ).toString());
-                        flat->setAddress( xml.attributes().value( "address" ).toString());
-                        flat->setDateTime( QDateTime::fromString( xml.attributes().value( "date" ).toString(), "dd.MM.yyyy hh:mm" ));
+                    if ( xml.name() == "listing" ) {
+                        Listing *listing = new Listing();
+                        listing->setRooms( xml.attributes().value( "rooms" ).toInt());
+                        listing->setPrice( xml.attributes().value( "price" ).toInt());
+                        listing->setArea( xml.attributes().value( "area" ).toInt());
+                        listing->setFloor( xml.attributes().value( "floor" ).toInt());
+                        listing->setTotalFloors( xml.attributes().value( "total" ).toInt());
+                        listing->setDescription( xml.attributes().value( "description" ).toString());
+                        listing->setLink( xml.attributes().value( "link" ).toString());
+                        listing->setAddress( xml.attributes().value( "address" ).toString());
+                        listing->setDateTime( QDateTime::fromString( xml.attributes().value( "date" ).toString(), "dd.MM.yyyy hh:mm" ));
 
                         // check for duplicates
                         bool found = false;
-                        foreach ( Flat *flatPtr, m.flatList ) {
-                            if ( !QString::compare( flatPtr->link(), flat->link()))
+                        foreach ( Listing *listingPtr, m.listingList ) {
+                            if ( !QString::compare( listingPtr->link(), listing->link()))
                                 found = true;
                         }
 
                         if ( !found )
-                            m.flatList << flat;
+                            m.listingList << listing;
 
                         xml.readNext();
                     } else
@@ -553,38 +564,39 @@ void MainWindow::readListings( const QString &path ) {
 }
 
 /**
- * @brief FlatSortModel::lessThan
+ * @brief ListingSortModel::lessThan
  * @param left
  * @param right
  * @return
  */
-bool FlatSortModel::lessThan( const QModelIndex &left, const QModelIndex &right ) const {
+bool ListingSortModel::lessThan( const QModelIndex &left, const QModelIndex &right ) const {
     QVariant leftData = this->sourceModel()->data( left );
     QVariant rightData = this->sourceModel()->data( right );
     bool n1, n2;
     int num1, num2;
 
+    // special compare for dates
     if ( left.column() == MainWindow::DateTime ) {
         int leftId = this->sourceModel()->data( left, Qt::UserRole ).toInt();
         int rightId = this->sourceModel()->data( right, Qt::UserRole ).toInt();
 
-        if ( leftId >= 0 && leftId < m.flatList.count() && rightId >= 0 && rightId < m.flatList.count()) {
-            Flat *leftFlat = m.flatList.at( leftId );
-            Flat *rightFlat = m.flatList.at( rightId );
+        if ( leftId >= 0 && leftId < m.listingList.count() && rightId >= 0 && rightId < m.listingList.count()) {
+            Listing *leftL = m.listingList.at( leftId );
+            Listing *rightL = m.listingList.at( rightId );
 
-            if ( leftFlat != NULL && rightFlat != NULL )
-                return leftFlat->dateTime() < rightFlat->dateTime();
+            if ( leftL != NULL && rightL != NULL )
+                return leftL->dateTime() < rightL->dateTime();
         }
     }
 
+    // other columns contain either text or number
     num1 = leftData.toInt( &n1 );
     num2 = rightData.toInt( &n2 );
 
-    // these must be integers or strings
     if ( n1 && n2 )
         return num1 < num2;
-    else
-        return QString::localeAwareCompare( leftData.toString(), rightData.toString()) < 0;
+
+    return QString::localeAwareCompare( leftData.toString(), rightData.toString()) < 0;
 }
 
 /**
@@ -600,9 +612,11 @@ void MainWindow::on_addButton_clicked() {
  * @brief MainWindow::on_removeButton_clicked
  */
 void MainWindow::on_removeButton_clicked() {
-    this->filterModel->beginReset();
-    int row = this->ui->filterView->currentIndex().row();
+    int row;
 
+    this->filterModel->beginReset();
+
+    row = this->ui->filterView->currentIndex().row();
     if ( row >=0 && row < m.filterList.count()) {
         Filter *filter = m.filterList.takeAt( this->ui->filterView->currentIndex().row());
         delete filter;
@@ -616,8 +630,11 @@ void MainWindow::on_removeButton_clicked() {
  */
 void MainWindow::on_removeAllButton_clicked(){
     this->filterModel->beginReset();
+
     foreach ( Filter *filter, m.filterList )
         delete filter;
+
     m.filterList.clear();
+
     this->filterModel->endReset();
 }

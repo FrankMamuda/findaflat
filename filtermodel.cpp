@@ -37,7 +37,7 @@ QVariant FilterModel::data( const QModelIndex &index, int role ) const {
     if ( role == Qt::DisplayRole ) {
         Filter *filter = m.filterList.at( index.row());
 
-        return QString( "Istabas %1-%2, stāvs-%3, platība %4-%5, cena EUR %6-%7" )
+        return this->tr( "Rooms %1-%2, floor-%3, area %4-%5, price EUR %6-%7" )
                 .arg( filter->roomsMin()).arg( filter->roomsMax())
                 .arg( filter->floorMin())
                 .arg( filter->areaMin()).arg( filter->areaMax())

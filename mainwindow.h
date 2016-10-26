@@ -32,7 +32,7 @@
 #include <QSortFilterProxyModel>
 #include <QSettings>
 #include <QStandardItemModel>
-#include "flat.h"
+#include "listing.h"
 #include "filtermodel.h"
 #include "ui_mainwindow.h"
 
@@ -50,11 +50,11 @@ static const QString DefaultXML = QDir::currentPath() + "/saved.xml";
 }
 
 /**
- * @brief The FlatSortModel class
+ * @brief The ListingSortModel class
  */
-class FlatSortModel : public QSortFilterProxyModel {
+class ListingSortModel : public QSortFilterProxyModel {
 public:
-    FlatSortModel( QObject *parent ) : QSortFilterProxyModel( parent ) {}
+    ListingSortModel( QObject *parent ) : QSortFilterProxyModel( parent ) {}
     bool lessThan( const QModelIndex &left, const QModelIndex &right ) const;
 };
 
@@ -122,7 +122,7 @@ private:
     // table
     QStringList columnHeaders;
     QStandardItemModel *modelPtr;
-    FlatSortModel *proxyModel;
+    ListingSortModel *proxyModel;
     FilterModel *filterModel;
 };
 

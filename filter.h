@@ -22,7 +22,7 @@
 //
 // includes
 //
-#include "flat.h"
+#include "listing.h"
 
 /**
  * @brief The Filter class
@@ -37,7 +37,7 @@ public:
     int floorMin() const { return this->m_floorMin; }
     int roomsMin() const { return this->m_roomsMin;  }
     int roomsMax() const { return this->m_roomsMax;  }
-    bool compare( const Flat *flat ) const;
+    bool compare( const Listing *listing ) const;
     QString settingsString() const;
     static Filter *fromString( const QString &filter );
 

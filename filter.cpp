@@ -33,17 +33,17 @@ Filter::Filter( int priceMin, int priceMax, int areaMin, int areaMax, int floorM
 
 /**
  * @brief Filter::compare
- * @param flat
+ * @param listing
  * @return
  */
-bool Filter::compare( const Flat *flat ) const {
-    if ( flat->floor() < this->floorMin() ||
-         flat->area() < this->areaMin() ||
-         flat->area() > this->areaMax() ||
-         flat->price() < this->priceMin() ||
-         flat->price() > this->priceMax() ||
-         flat->rooms() < this->roomsMin() ||
-         flat->rooms() > this->roomsMax())
+bool Filter::compare( const Listing *listing ) const {
+    if ( listing->floor() < this->floorMin() ||
+         listing->area() < this->areaMin() ||
+         listing->area() > this->areaMax() ||
+         listing->price() < this->priceMin() ||
+         listing->price() > this->priceMax() ||
+         listing->rooms() < this->roomsMin() ||
+         listing->rooms() > this->roomsMax())
         return false;
 
     return true;

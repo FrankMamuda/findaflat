@@ -16,8 +16,8 @@
  *
  */
 
-#ifndef FLAT_H
-#define FLAT_H
+#ifndef LISTING_H
+#define LISTING_H
 
 //
 // includes
@@ -26,13 +26,13 @@
 #include <QDateTime>
 
 /**
- * @brief The Flat class
+ * @brief The Listing class
  */
-class Flat : public QObject {
+class Listing : public QObject {
     Q_OBJECT
 
 public:
-    explicit Flat( QObject *parent = 0 ) : QObject( parent ), m_rooms( 0 ), m_price( 0 ), m_area( 0 ), m_floor( 0 ), m_floor_total( 0 ) { }
+    explicit Listing( QObject *parent = 0 ) : QObject( parent ), m_rooms( 0 ), m_price( 0 ), m_area( 0 ), m_floor( 0 ), m_floor_total( 0 ) { }
     int rooms() const { return this->m_rooms; }
     int price() const { return this->m_price; }
     int pricePerSquare() const { return this->m_price / this->m_area; }
@@ -71,4 +71,4 @@ private:
     QVariant readData( const QString &data, const QString &pattern ) const;
 };
 
-#endif // FLAT_H
+#endif // LISTING_H

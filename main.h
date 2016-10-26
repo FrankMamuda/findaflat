@@ -23,7 +23,7 @@
 // includes
 //
 #include <QList>
-#include "flat.h"
+#include "listing.h"
 #include "filter.h"
 #include <QSettings>
 
@@ -33,8 +33,8 @@
 class Main {
 
 public:
-    QList <Flat*> flatList;
-    QList <Filter*> filterList;
+    QList<Listing *> listingList;
+    QList<Filter*> filterList;
     QSettings *settings;
 };
 
