@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Avotu Briezhaudzetava
+ * Copyright (C) 2016-2019 Factory #12
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef FILTERMODEL_H
-#define FILTERMODEL_H
+#pragma once
 
 //
 // includes
@@ -32,11 +31,9 @@ class FilterModel : public QStringListModel {
     Q_OBJECT
 
 public:
-    FilterModel( QObject *parentPtr = 0 ) : QStringListModel( parentPtr ) {}
-    int rowCount( const QModelIndex & = QModelIndex()) const { return m.filterList.count(); }
-    QVariant data( const QModelIndex &, int ) const;
+    explicit FilterModel( QObject *parentPtr = 0 ) : QStringListModel( parentPtr ) {}
+    int rowCount( const QModelIndex & = QModelIndex()) const override { return Main::instance()->filterList.count(); }
+    QVariant data( const QModelIndex &, int ) const override;
     void beginReset() { this->beginResetModel(); }
     void endReset() { this->endResetModel(); }
 };
-
-#endif // GUI_TASKLISTMODEL_H

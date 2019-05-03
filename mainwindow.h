@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Avotu Briezhaudzetava
+ * Copyright (C) 2016-2019 Factory #12
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 //
 // includes
@@ -45,7 +44,7 @@ static const unsigned int DefaultMaxArea = 60;
 static const unsigned int DefaultMinFloor = 2;
 static const unsigned int DefaultMinRooms = 1;
 static const unsigned int DefaultMaxRooms = 3;
-static const QString DefaultURL = "https://www.ss.lv/lv/real-estate/flats/riga/centre/rss/";
+static const QString DefaultURL = "https://www.ss.com/lv/real-estate/flats/riga/centre/rss/";
 static const QString DefaultXML = QDir::currentPath() + "/saved.xml";
 }
 
@@ -74,7 +73,7 @@ public:
         Price
     };
 
-    explicit MainWindow( QWidget *parent = 0 );
+    explicit MainWindow( QWidget *parent = nullptr );
     ~MainWindow();
 
 private slots:
@@ -125,5 +124,3 @@ private:
     ListingSortModel *proxyModel;
     FilterModel *filterModel;
 };
-
-#endif // MAINWINDOW_H

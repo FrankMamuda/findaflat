@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Avotu Briezhaudzetava
+ * Copyright (C) 2016-2019 Factory #12
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,11 +27,6 @@
 //#include <QDebug>
 
 //
-// classes
-//
-class Main m;
-
-//
 // defines
 //
 #define FORCE_LATVIAN
@@ -46,7 +41,7 @@ int main( int argc, char *argv[] ) {
     QApplication app( argc, argv );
 
     // set up settings
-    m.settings = new QSettings( "Avotu Briezhaudzetava", "FindAFlat" );
+    Main::instance()->settings = new QSettings( "Factory12", "FindAFlat" );
 
     // set up translator
     QTranslator translator;
@@ -63,6 +58,11 @@ int main( int argc, char *argv[] ) {
     MainWindow gui;
     gui.show();
     QLoggingCategory::setFilterRules( "qt.network.ssl.warning=false" );
+
+    // clean up
+    QObject::connect( qApp, &QApplication::aboutToQuit, []() {
+        delete Main::instance();
+    } );
 
     // exec
     return app.exec();

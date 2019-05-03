@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Avotu Briezhaudzetava
+ * Copyright (C) 2016-2019 Factory #12
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,13 +31,14 @@
  */
 QVariant Listing::readData( const QString &data, const QString &pattern ) const {
     QStringList list;
-    QRegExp rx( pattern );
+    const QRegExp rx( pattern );
     int pos = 0;
 
     while (( pos = rx.indexIn( data, pos )) != -1 ) {
         list << rx.cap( 1 );
         pos += rx.matchedLength();
     }
+
     if ( !list.isEmpty())
         return list.first();
 
@@ -49,11 +50,8 @@ QVariant Listing::readData( const QString &data, const QString &pattern ) const 
  * @param data
  */
 void Listing::parseRawXML( const QString &data ) {
-    QString simplified;
-
     // simplify xml
-    simplified = data;
-    simplified = simplified.replace( ",", "" ).replace( "<b>", "" ).replace( "<br>", "" ).replace( "</b>", "<" ).replace( "</br>", "" );
+    const QString simplified( QString( data ).replace( ",", "" ).replace( "<b>", "" ).replace( "<br>", "" ).replace( "</b>", "<" ).replace( "</br>", "" ));
 
     // read data
     this->setRooms( this->readData( simplified, "Ist.:\\s+(\\d+)<" ).toInt());

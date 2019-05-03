@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2016 Avotu Briezhaudzetava
+ * Copyright (C) 2016-2019 Factory #12
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,11 +31,11 @@ QVariant FilterModel::data( const QModelIndex &index, int role ) const {
     if ( !index.isValid())
         return QVariant();
 
-    if ( index.row() >= m.filterList.count())
+    if ( index.row() >= Main::instance()->filterList.count())
         return QVariant();
 
     if ( role == Qt::DisplayRole ) {
-        Filter *filter = m.filterList.at( index.row());
+        const Filter *filter( Main::instance()->filterList.at( index.row()));
 
         return this->tr( "Rooms %1-%2, floor-%3, area %4-%5, price EUR %6-%7" )
                 .arg( filter->roomsMin()).arg( filter->roomsMax())

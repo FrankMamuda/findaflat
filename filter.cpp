@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Avotu Briezhaudzetava
+ * Copyright (C) 2016-2019 Factory #12
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,10 +26,7 @@
 /**
  * @brief Filter::Filter
  */
-Filter::Filter( int priceMin, int priceMax, int areaMin, int areaMax, int floorMin, int roomsMin, int roomsMax )
-    : m_priceMin( priceMin ), m_priceMax( priceMax ), m_areaMin( areaMin ), m_areaMax( areaMax ), m_floorMin( floorMin ), m_roomsMin( roomsMin ), m_roomsMax( roomsMax )
-{
-}
+
 
 /**
  * @brief Filter::compare
@@ -66,7 +63,7 @@ QString Filter::settingsString() const {
  * @return
  */
 Filter *Filter::fromString( const QString &filter ) {
-    QStringList list = filter.split( ";" );
+    const QStringList list( filter.split( ";" ));
 
     if ( list.count() == 7 )
         return new Filter( list.at( 0 ).toInt(), list.at( 1 ).toInt(), list.at( 2 ).toInt(), list.at( 3 ).toInt(), list.at( 4 ).toInt(), list.at( 5 ).toInt(), list.at( 6 ).toInt());

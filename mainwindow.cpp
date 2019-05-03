@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Avotu Briezhaudzetava
+ * Copyright (C) 2016-2019 Factory #12
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
 
     // set up sorting & view model
     this->proxyModel = new ListingSortModel( this );
-    this->modelPtr = new QStandardItemModel( m.listingList.count(), this->columnHeaders.count(), this );
+    this->modelPtr = new QStandardItemModel( Main::instance()->listingList.count(), this->columnHeaders.count(), this );
     this->proxyModel->setSourceModel( this->modelPtr );
     this->proxyModel->setDynamicSortFilter( true );
     this->ui->rssTableView->verticalHeader()->hide();
@@ -81,21 +81,21 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     this->connect( this->timer, SIGNAL( timeout()), this, SLOT( downloadRSS()));
 
     // read settings
-    this->ui->valueMinPrice->setValue( m.settings->value( "filter/minPrice", Ui::DefaultMinPrice ).toInt());
-    this->ui->valueMaxPrice->setValue( m.settings->value( "filter/maxPrice", Ui::DefaultMaxPrice ).toInt());
-    this->ui->valueMinArea->setValue( m.settings->value( "filter/minArea", Ui::DefaultMinArea ).toInt());
-    this->ui->valueMaxArea->setValue( m.settings->value( "filter/maxArea", Ui::DefaultMaxArea ).toInt());
-    this->ui->valueFloor->setValue( m.settings->value( "filter/minFloor", Ui::DefaultMinFloor ).toInt());
-    this->ui->valueMinRooms->setValue( m.settings->value( "filter/minRooms", Ui::DefaultMinRooms ).toInt());
-    this->ui->valueMaxRooms->setValue( m.settings->value( "filter/maxRooms", Ui::DefaultMaxRooms ).toInt());
-    this->ui->urlRSS->setText( m.settings->value( "filter/url", Ui::DefaultURL ).toString());
+    this->ui->valueMinPrice->setValue( Main::instance()->settings->value( "filter/minPrice", Ui::DefaultMinPrice ).toInt());
+    this->ui->valueMaxPrice->setValue( Main::instance()->settings->value( "filter/maxPrice", Ui::DefaultMaxPrice ).toInt());
+    this->ui->valueMinArea->setValue( Main::instance()->settings->value( "filter/minArea", Ui::DefaultMinArea ).toInt());
+    this->ui->valueMaxArea->setValue( Main::instance()->settings->value( "filter/maxArea", Ui::DefaultMaxArea ).toInt());
+    this->ui->valueFloor->setValue( Main::instance()->settings->value( "filter/minFloor", Ui::DefaultMinFloor ).toInt());
+    this->ui->valueMinRooms->setValue( Main::instance()->settings->value( "filter/minRooms", Ui::DefaultMinRooms ).toInt());
+    this->ui->valueMaxRooms->setValue( Main::instance()->settings->value( "filter/maxRooms", Ui::DefaultMaxRooms ).toInt());
+    this->ui->urlRSS->setText( Main::instance()->settings->value( "filter/url", Ui::DefaultURL ).toString());
 
     // read filters
-    int y, count = m.settings->value( "filter/numFilters", 0 ).toInt();
+    int y, count = Main::instance()->settings->value( "filter/numFilters", 0 ).toInt();
     for ( y = 0; y < count; y++ ) {
-        Filter *filter = Filter::fromString( m.settings->value( QString( "filter/filter_%1" ).arg( y )).toString());
-        if ( filter != NULL )
-            m.filterList << filter;
+        Filter *filter = Filter::fromString( Main::instance()->settings->value( QString( "filter/filter_%1" ).arg( y )).toString());
+        if ( filter != nullptr )
+            Main::instance()->filterList << filter;
     }
 
     // read previous listings
@@ -134,12 +134,12 @@ void MainWindow::fillData() {
 
     // fill data
     for ( y = 0; y < this->columnHeaders.count(); y++ ) {
-        for ( k = 0; k < m.listingList.count(); k++ ) {
-            Listing *listing = m.listingList.at( k );
-            QStandardItem *item = new QStandardItem();
+        for ( k = 0; k < Main::instance()->listingList.count(); k++ ) {
+            Listing *listing( Main::instance()->listingList.at( k ));
+            QStandardItem *item( new QStandardItem());
             QString text;
 
-            if ( listing == NULL )
+            if ( listing == nullptr )
                 return;
 
             switch ( y ) {
@@ -174,7 +174,7 @@ void MainWindow::fillData() {
             // make it centred
             item->setData( Qt::AlignCenter, Qt::TextAlignmentRole );
             item->setText( text );
-            item->setData( m.listingList.indexOf( listing ), Qt::UserRole );
+            item->setData( Main::instance()->listingList.indexOf( listing ), Qt::UserRole );
             this->modelPtr->setItem( k, y, item );
         }
     }
@@ -192,33 +192,33 @@ MainWindow::~MainWindow() {
     this->storeListings();
 
     // store settings
-    m.settings->setValue( "filter/minPrice", this->priceMin());
-    m.settings->setValue( "filter/maxPrice", this->priceMax());
-    m.settings->setValue( "filter/minArea", this->areaMin());
-    m.settings->setValue( "filter/maxArea", this->areaMax());
-    m.settings->setValue( "filter/minFloor", this->floorMin());
-    m.settings->setValue( "filter/minRooms", this->roomsMin());
-    m.settings->setValue( "filter/maxRooms", this->roomsMax());
-    m.settings->setValue( "filter/url", this->ui->urlRSS->text());
+    Main::instance()->settings->setValue( "filter/minPrice", this->priceMin());
+    Main::instance()->settings->setValue( "filter/maxPrice", this->priceMax());
+    Main::instance()->settings->setValue( "filter/minArea", this->areaMin());
+    Main::instance()->settings->setValue( "filter/maxArea", this->areaMax());
+    Main::instance()->settings->setValue( "filter/minFloor", this->floorMin());
+    Main::instance()->settings->setValue( "filter/minRooms", this->roomsMin());
+    Main::instance()->settings->setValue( "filter/maxRooms", this->roomsMax());
+    Main::instance()->settings->setValue( "filter/url", this->ui->urlRSS->text());
 
     // store filters
     int count = 0;
-    foreach ( Filter *filter, m.filterList ) {
-        m.settings->setValue( QString( "filter/filter_%1" ).arg( count ), filter->settingsString());
+    foreach ( Filter *filter, Main::instance()->filterList ) {
+        Main::instance()->settings->setValue( QString( "filter/filter_%1" ).arg( count ), filter->settingsString());
         count++;
         delete filter;
     }
-    m.settings->setValue( "filter/numFilters", count );
+    Main::instance()->settings->setValue( "filter/numFilters", count );
 
     // delete ui & other stuff
     delete this->timer;
     delete this->trayIcon;
     delete this->filterModel;
     delete ui;
-    delete m.settings;
+    delete Main::instance()->settings;
 
     // clear listings
-    foreach ( Listing *listing, m.listingList )
+    foreach ( Listing *listing, Main::instance()->listingList )
         delete listing;
 }
 
@@ -231,7 +231,7 @@ void MainWindow::parseRSS() {
     QString title;
     QString date;
     QString description;
-    Listing *listing;
+    Listing *listing = nullptr;
     int count = 0;
 
     // announce
@@ -247,7 +247,7 @@ void MainWindow::parseRSS() {
             }
             tag = this->xml.name().toString();
         } else if( this->xml.isEndElement()) {
-            if ( this->xml.name() == "item" ) {
+            if ( this->xml.name() == "item" && listing != nullptr ) {
                 bool ok = false;
 
                 // read listing info
@@ -263,7 +263,7 @@ void MainWindow::parseRSS() {
                 listing->setDateTime( dateTime );
 
                 // must match at least one filter
-                foreach ( Filter *filter, m.filterList ) {
+                foreach ( Filter *filter, Main::instance()->filterList ) {
                     if ( listing->floor() >= filter->floorMin() &&
                          listing->area() >= filter->areaMin() &&
                          listing->area() <= filter->areaMax() &&
@@ -282,18 +282,19 @@ void MainWindow::parseRSS() {
                 } else {
                     // check for duplicates
                     bool found = false;
-                    foreach ( Listing *listingPtr, m.listingList ) {
+                    foreach ( Listing *listingPtr, Main::instance()->listingList ) {
                         if ( !QString::compare( listingPtr->link(), listing->link()))
                             found = true;
                     }
 
                     if ( !found ) {
-                        m.listingList << listing;
+                        Main::instance()->listingList << listing;
                         count++;
                     }
                 }
             }
         } else if ( this->xml.isCharacters() && !this->xml.isWhitespace()) {
+            // TODO: proper compare
             if ( tag == "title" )
                 title = this->xml.text().toString();
             else if ( tag == "link" )
@@ -307,12 +308,8 @@ void MainWindow::parseRSS() {
 
     // only report if new listings found
     if ( count > 0 ) {
-        QString num = QString( "%1" ).arg( count );
-
-        if ( num.endsWith( "1" ))
-            this->trayIcon->showMessage( this->tr( "FindAFlat" ), this->tr( "%1 new listing found" ).arg( count ), QSystemTrayIcon::Information );
-        else
-            this->trayIcon->showMessage( this->tr( "FindAFlat" ), this->tr( "%1 new listings found" ).arg( count ), QSystemTrayIcon::Information );
+        const QString num( QString( "%1" ).arg( count ));
+        this->trayIcon->showMessage( this->tr( "FindAFlat" ), this->tr( num.endsWith( "1" ) ? "%1 new listing found" : "%1 new listings found" ).arg( count ), QSystemTrayIcon::Information );
 
         // raise window
         this->setWindowState( Qt::WindowActive );
@@ -340,7 +337,7 @@ void MainWindow::downloadRSS() {
  */
 void MainWindow::replyReceived( QNetworkReply *networkReply ) {
     if ( !networkReply->error())  {
-        QByteArray data = networkReply->readAll();
+        const QByteArray data( networkReply->readAll());
         this->xml.clear();
         this->xml.addData( data );
 
@@ -360,18 +357,15 @@ void MainWindow::replyReceived( QNetworkReply *networkReply ) {
  * @param index
  */
 void MainWindow::openURL( const QModelIndex &index ) {
-    int id;
-    Listing *listing;
-
     // get listing id
-    id = this->proxyModel->data( index, Qt::UserRole ).toInt();
+    const int id = this->proxyModel->data( index, Qt::UserRole ).toInt();
 
     // failsafe
-    if ( id < 0 || id >= m.listingList.count())
+    if ( id < 0 || id >= Main::instance()->listingList.count())
         return;
 
-    listing = m.listingList.at( id );
-    if ( &listing != NULL )
+    const Listing *listing( Main::instance()->listingList.at( id ));
+    if ( listing != nullptr )
         QDesktopServices::openUrl( QUrl( listing->link()));
 }
 
@@ -398,7 +392,7 @@ void MainWindow::stopSearch() {
  * @brief MainWindow::clear
  */
 void MainWindow::clear() {
-    m.listingList.clear();
+    Main::instance()->listingList.clear();
     this->clearData();
 }
 
@@ -430,7 +424,8 @@ void MainWindow::check() {
  * @brief MainWindow::on_actionOpen_triggered
  */
 void MainWindow::on_actionOpen_triggered() {
-    QString filename = QFileDialog::getOpenFileName( this, this->tr( "Select XML" ), QDir::currentPath(), this->tr( "XML listings (*.xml)" ));
+    const QString filename( QFileDialog::getOpenFileName( this, this->tr( "Select XML" ), QDir::currentPath(), this->tr( "XML listings (*.xml)" )));
+
     if ( !filename.isEmpty())
         this->readListings( filename );
 }
@@ -439,7 +434,8 @@ void MainWindow::on_actionOpen_triggered() {
  * @brief MainWindow::on_actionStore_triggered
  */
 void MainWindow::on_actionStore_triggered() {
-    QString filename = QFileDialog::getSaveFileName( this, this->tr( "Select XML" ), QDir::currentPath(), this->tr( "XML listings (*.xml)" ));
+    const QString filename( QFileDialog::getSaveFileName( this, this->tr( "Select XML" ), QDir::currentPath(), this->tr( "XML listings (*.xml)" )));
+
     if ( !filename.isEmpty())
         this->storeListings( filename );
 }
@@ -452,10 +448,7 @@ void MainWindow::on_actionSearch_toggled( bool checked ) {
     if ( this->m_lock )
         return;
 
-    if ( checked )
-        this->startSearch();
-    else
-        this->stopSearch();
+    checked ? this->startSearch() : this->stopSearch();
 }
 
 /**
@@ -486,10 +479,11 @@ void MainWindow::on_resetButton_clicked() {
  */
 void MainWindow::storeListings( const QString &path ) {
     QFile xmlFile( path );
+
     if ( xmlFile.open( QFile::ReadWrite | QFile::Truncate )) {
         xmlFile.write( "<listings version=\"1.0\">\n" );
 
-        foreach ( Listing *listing, m.listingList ) {
+        foreach ( Listing *listing, Main::instance()->listingList ) {
             xmlFile.write( QString( "<listing rooms=\"%1\" price=\"%2\" area=\"%3\" floor=\"%4\" total=\"%5\" description=\"%6\" link=\"%7\" address=\"%8\" date=\"%9\" />\n" )
                            .arg( listing->rooms())
                            .arg( listing->price())
@@ -513,6 +507,7 @@ void MainWindow::storeListings( const QString &path ) {
  */
 void MainWindow::readListings( const QString &path ) {
     QFile xmlFile( path );
+
     if ( xmlFile.open( QFile::ReadOnly )) {
         QXmlStreamReader xml;
         xml.addData( xmlFile.readAll());
@@ -537,13 +532,13 @@ void MainWindow::readListings( const QString &path ) {
 
                         // check for duplicates
                         bool found = false;
-                        foreach ( Listing *listingPtr, m.listingList ) {
+                        foreach ( Listing *listingPtr, Main::instance()->listingList ) {
                             if ( !QString::compare( listingPtr->link(), listing->link()))
                                 found = true;
                         }
 
                         if ( !found )
-                            m.listingList << listing;
+                            Main::instance()->listingList << listing;
 
                         xml.readNext();
                     } else
@@ -570,28 +565,27 @@ void MainWindow::readListings( const QString &path ) {
  * @return
  */
 bool ListingSortModel::lessThan( const QModelIndex &left, const QModelIndex &right ) const {
-    QVariant leftData = this->sourceModel()->data( left );
-    QVariant rightData = this->sourceModel()->data( right );
+    const QVariant leftData( this->sourceModel()->data( left ));
+    const QVariant rightData( this->sourceModel()->data( right ));
     bool n1, n2;
-    int num1, num2;
 
     // special compare for dates
     if ( left.column() == MainWindow::DateTime ) {
-        int leftId = this->sourceModel()->data( left, Qt::UserRole ).toInt();
-        int rightId = this->sourceModel()->data( right, Qt::UserRole ).toInt();
+        const int leftId = this->sourceModel()->data( left, Qt::UserRole ).toInt();
+        const int rightId = this->sourceModel()->data( right, Qt::UserRole ).toInt();
 
-        if ( leftId >= 0 && leftId < m.listingList.count() && rightId >= 0 && rightId < m.listingList.count()) {
-            Listing *leftL = m.listingList.at( leftId );
-            Listing *rightL = m.listingList.at( rightId );
+        if ( leftId >= 0 && leftId < Main::instance()->listingList.count() && rightId >= 0 && rightId < Main::instance()->listingList.count()) {
+            const Listing *leftL( Main::instance()->listingList.at( leftId ));
+            const Listing *rightL( Main::instance()->listingList.at( rightId ));
 
-            if ( leftL != NULL && rightL != NULL )
+            if ( leftL != nullptr && rightL != nullptr )
                 return leftL->dateTime() < rightL->dateTime();
         }
     }
 
     // other columns contain either text or number
-    num1 = leftData.toInt( &n1 );
-    num2 = rightData.toInt( &n2 );
+    const bool num1 = leftData.toInt( &n1 );
+    const bool num2 = rightData.toInt( &n2 );
 
     if ( n1 && n2 )
         return num1 < num2;
@@ -604,7 +598,7 @@ bool ListingSortModel::lessThan( const QModelIndex &left, const QModelIndex &rig
  */
 void MainWindow::on_addButton_clicked() {
     this->filterModel->beginReset();
-    m.filterList << new Filter( this->priceMin(), this->priceMax(), this->areaMin(), this->areaMax(), this->floorMin(), this->roomsMin(), this->roomsMax());
+    Main::instance()->filterList << new Filter( this->priceMin(), this->priceMax(), this->areaMin(), this->areaMax(), this->floorMin(), this->roomsMin(), this->roomsMax());
     this->filterModel->endReset();
 }
 
@@ -612,13 +606,11 @@ void MainWindow::on_addButton_clicked() {
  * @brief MainWindow::on_removeButton_clicked
  */
 void MainWindow::on_removeButton_clicked() {
-    int row;
-
     this->filterModel->beginReset();
 
-    row = this->ui->filterView->currentIndex().row();
-    if ( row >=0 && row < m.filterList.count()) {
-        Filter *filter = m.filterList.takeAt( this->ui->filterView->currentIndex().row());
+    const int row = this->ui->filterView->currentIndex().row();
+    if ( row >=0 && row < Main::instance()->filterList.count()) {
+        Filter *filter = Main::instance()->filterList.takeAt( this->ui->filterView->currentIndex().row());
         delete filter;
     }
 
@@ -631,10 +623,10 @@ void MainWindow::on_removeButton_clicked() {
 void MainWindow::on_removeAllButton_clicked(){
     this->filterModel->beginReset();
 
-    foreach ( Filter *filter, m.filterList )
+    foreach ( Filter *filter, Main::instance()->filterList )
         delete filter;
 
-    m.filterList.clear();
+    Main::instance()->filterList.clear();
 
     this->filterModel->endReset();
 }

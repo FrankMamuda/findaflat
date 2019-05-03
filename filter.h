@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Avotu Briezhaudzetava
+ * Copyright (C) 2016-2019 Factory #12
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef FILTER_H
-#define FILTER_H
+#pragma once
 
 //
 // includes
@@ -29,7 +28,10 @@
  */
 class Filter {
 public:
-    Filter( int priceMin, int priceMax, int areaMin, int areaMax, int floorMin, int roomsMin, int roomsMax );
+    explicit Filter( int priceMin, int priceMax, int areaMin, int areaMax,
+                     int floorMin, int roomsMin, int roomsMax )
+        : m_priceMin( priceMin ), m_priceMax( priceMax ), m_areaMin( areaMin ), m_areaMax( areaMax ),
+          m_floorMin( floorMin ), m_roomsMin( roomsMin ), m_roomsMax( roomsMax ) {}
     int priceMin() const { return this->m_priceMin;  }
     int priceMax() const { return this->m_priceMax;  }
     int areaMin() const  { return this->m_areaMin;   }
@@ -50,5 +52,3 @@ private:
     int m_roomsMin;
     int m_roomsMax;
 };
-
-#endif // FILTER_H

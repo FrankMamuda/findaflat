@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Avotu Briezhaudzetava
+ * Copyright (C) 2016-2019 Factory #12
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef LISTING_H
-#define LISTING_H
+#pragma once
 
 //
 // includes
@@ -32,7 +31,8 @@ class Listing : public QObject {
     Q_OBJECT
 
 public:
-    explicit Listing( QObject *parent = 0 ) : QObject( parent ), m_rooms( 0 ), m_price( 0 ), m_area( 0 ), m_floor( 0 ), m_floor_total( 0 ) { }
+    explicit Listing( QObject *parent = nullptr ) :
+        QObject( parent ), m_rooms( 0 ), m_price( 0 ), m_area( 0 ), m_floor( 0 ), m_floor_total( 0 ) {}
     int rooms() const { return this->m_rooms; }
     int price() const { return this->m_price; }
     int pricePerSquare() const { return this->m_price / this->m_area; }
@@ -43,8 +43,6 @@ public:
     QString link() const { return this->m_link; }
     QString address() const { return this->m_address; }
     QDateTime dateTime() const { return this->m_dateTime; }
-
-signals:
 
 public slots:
     void setRooms( int rooms ) { this->m_rooms = rooms; }
@@ -70,5 +68,3 @@ private:
     QDateTime m_dateTime;
     QVariant readData( const QString &data, const QString &pattern ) const;
 };
-
-#endif // LISTING_H

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Avotu Briezhaudzetava
+ * Copyright (C) 2016-2019 Factory #12
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef MAIN_H
-#define MAIN_H
+#pragma once
 
 //
 // includes
@@ -33,14 +32,13 @@
 class Main {
 
 public:
+    static Main *instance() { static Main *instance( new Main()); return instance; }
+    ~Main() = default;
+
     QList<Listing *> listingList;
     QList<Filter*> filterList;
     QSettings *settings;
+
+private:
+    explicit Main() {}
 };
-
-//
-// externals
-//
-extern class Main m;
-
-#endif // MAIN_H
