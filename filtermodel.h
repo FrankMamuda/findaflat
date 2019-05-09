@@ -31,9 +31,9 @@ class FilterModel : public QStringListModel {
     Q_OBJECT
 
 public:
-    explicit FilterModel( QObject *parentPtr = 0 ) : QStringListModel( parentPtr ) {}
-    int rowCount( const QModelIndex & = QModelIndex()) const override { return Main::instance()->filterList.count(); }
+    explicit FilterModel( QObject *parent = nullptr ) : QStringListModel( parent ) {}
+    int rowCount( const QModelIndex & = QModelIndex()) const override { return Main::instance()->filters.count(); }
     QVariant data( const QModelIndex &, int ) const override;
     void beginReset() { this->beginResetModel(); }
-    void endReset() { this->endResetModel(); }
+    void endReset();
 };

@@ -34,6 +34,7 @@
 #include "listing.h"
 #include "filtermodel.h"
 #include "ui_mainwindow.h"
+#include "listingmodel.h"
 
 namespace Ui {
 class MainWindow;
@@ -45,40 +46,33 @@ static const unsigned int DefaultMinFloor = 2;
 static const unsigned int DefaultMinRooms = 1;
 static const unsigned int DefaultMaxRooms = 3;
 static const QString DefaultURL = "https://www.ss.com/lv/real-estate/flats/riga/centre/rss/";
-static const QString DefaultXML = QDir::currentPath() + "/saved.xml";
 }
-
-/**
- * @brief The ListingSortModel class
- */
-class ListingSortModel : public QSortFilterProxyModel {
-public:
-    ListingSortModel( QObject *parent ) : QSortFilterProxyModel( parent ) {}
-    bool lessThan( const QModelIndex &left, const QModelIndex &right ) const;
-};
 
 /**
  * @brief The MainWindow class
  */
 class MainWindow : public QMainWindow {
     Q_OBJECT
+    friend class Settings;
 
 public:
-    enum Columns {
-        Address = 0,
-        Rooms,
-        Area,
-        Floor,
-        DateTime,
-        Price
+    enum Tabs {
+        Listings,
+        FilterOptions,
+        Filters
     };
 
-    explicit MainWindow( QWidget *parent = nullptr );
+    static MainWindow *instance() { static MainWindow *instance( new MainWindow()); return instance; }
     ~MainWindow();
+
+public slots:
+    void fillListings();
+    void setupFilters();
+    void checkButtonStates();
 
 private slots:
     void replyReceived( QNetworkReply *reply );
-    void downloadRSS();
+    void downloadRSS() { if ( this->manager != nullptr ) this->manager->get( QNetworkRequest( QUrl( this->ui->urlRSS->text()))); }
     void parseRSS();
     void clear();
     void check();
@@ -91,23 +85,20 @@ private slots:
     void stopSearch();
     void on_actionClear_triggered();
     void on_resetButton_clicked();
-    void storeListings( const QString &path = Ui::DefaultXML );
-    void readListings( const QString &path = Ui::DefaultXML );
-    void fillHeader();
-    void clearData() { this->ui->rssTableView->model()->removeRows( 0, this->ui->rssTableView->model()->rowCount()); }
-    void fillData();
     void on_rssTableView_doubleClicked( const QModelIndex &index ) { this->openURL( index ); }
     void on_addButton_clicked();
     void on_removeButton_clicked();
     void on_removeAllButton_clicked();
 
 private:
+    explicit MainWindow( QWidget *parent = nullptr );
+
     Ui::MainWindow *ui;
-    QNetworkAccessManager *manager;
+    QNetworkAccessManager *manager = new QNetworkAccessManager( this );
     QXmlStreamReader xml;
-    QSystemTrayIcon *trayIcon;
-    QTimer *timer;
-    int m_lock;
+    QSystemTrayIcon *trayIcon = new QSystemTrayIcon( QIcon( ":/icons/icon" ), this );
+    QTimer *timer = new QTimer( this );
+    int m_lock = true;
 
     // getters
     int priceMin() const { return this->ui->valueMinPrice->value(); }
@@ -117,10 +108,10 @@ private:
     int floorMin() const { return this->ui->valueFloor->value(); }
     int roomsMin() const { return this->ui->valueMinRooms->value(); }
     int roomsMax() const { return this->ui->valueMaxRooms->value(); }
+    QString url() const { return this->ui->urlRSS->text(); }
 
     // table
-    QStringList columnHeaders;
-    QStandardItemModel *modelPtr;
-    ListingSortModel *proxyModel;
-    FilterModel *filterModel;
+    ListingModel *listingModel = new ListingModel( this );
+    FilterModel *filterModel = new FilterModel( this );
+    QSortFilterProxyModel *proxy = new QSortFilterProxyModel();
 };

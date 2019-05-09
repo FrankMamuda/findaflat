@@ -41,7 +41,7 @@ public:
     int roomsMax() const { return this->m_roomsMax;  }
     bool compare( const Listing *listing ) const;
     QString settingsString() const;
-    static Filter *fromString( const QString &filter );
+    static Filter fromString( const QString &filter );
 
 private:
     int m_priceMin;

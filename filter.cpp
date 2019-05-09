@@ -62,11 +62,11 @@ QString Filter::settingsString() const {
  * @brief Filter::fromString
  * @return
  */
-Filter *Filter::fromString( const QString &filter ) {
+Filter Filter::fromString( const QString &filter ) {
     const QStringList list( filter.split( ";" ));
 
     if ( list.count() == 7 )
-        return new Filter( list.at( 0 ).toInt(), list.at( 1 ).toInt(), list.at( 2 ).toInt(), list.at( 3 ).toInt(), list.at( 4 ).toInt(), list.at( 5 ).toInt(), list.at( 6 ).toInt());
+        return Filter( list.at( 0 ).toInt(), list.at( 1 ).toInt(), list.at( 2 ).toInt(), list.at( 3 ).toInt(), list.at( 4 ).toInt(), list.at( 5 ).toInt(), list.at( 6 ).toInt());
 
-    return new Filter( Ui::DefaultMinPrice, Ui::DefaultMaxPrice, Ui::DefaultMinArea, Ui::DefaultMaxArea, Ui::DefaultMinFloor, Ui::DefaultMinRooms, Ui::DefaultMaxRooms );
+    return Filter( Ui::DefaultMinPrice, Ui::DefaultMaxPrice, Ui::DefaultMinArea, Ui::DefaultMaxArea, Ui::DefaultMinFloor, Ui::DefaultMinRooms, Ui::DefaultMaxRooms );
 }

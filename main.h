@@ -24,20 +24,28 @@
 #include <QList>
 #include "listing.h"
 #include "filter.h"
+#include <QDir>
 #include <QSettings>
+
+namespace Main_ {
+static const QString DefaultXML = QDir::currentPath() + "/saved.xml";
+}
 
 /**
  * @brief The Main class
  */
-class Main {
+class Main : public QObject {
+    Q_OBJECT
 
 public:
     static Main *instance() { static Main *instance( new Main()); return instance; }
-    ~Main() = default;
+    ~Main();
+    QList<Listing> listings;
+    QList<Filter> filters;
 
-    QList<Listing *> listingList;
-    QList<Filter*> filterList;
-    QSettings *settings;
+public slots:
+    void storeListings( const QString &path = Main_::DefaultXML );
+    void readListings( const QString &path = Main_::DefaultXML );
 
 private:
     explicit Main() {}

@@ -27,29 +27,26 @@
 /**
  * @brief The Listing class
  */
-class Listing : public QObject {
-    Q_OBJECT
+class Listing {
 
 public:
-    explicit Listing( QObject *parent = nullptr ) :
-        QObject( parent ), m_rooms( 0 ), m_price( 0 ), m_area( 0 ), m_floor( 0 ), m_floor_total( 0 ) {}
+    explicit Listing() {}
+    ~Listing() = default;
     int rooms() const { return this->m_rooms; }
     int price() const { return this->m_price; }
     int pricePerSquare() const { return this->m_price / this->m_area; }
     int area() const { return this->m_area; }
     int floor() const { return this->m_floor; }
-    int totalFloors() const { return this->m_floor_total; }
+    int totalFloors() const { return this->m_floorTotal; }
     QString description() const { return this->m_description; }
     QString link() const { return this->m_link; }
     QString address() const { return this->m_address; }
     QDateTime dateTime() const { return this->m_dateTime; }
-
-public slots:
     void setRooms( int rooms ) { this->m_rooms = rooms; }
     void setPrice( int price ) { this->m_price = price; }
     void setArea( int area ) { this->m_area = area; }
     void setFloor( int floor ) { this->m_floor = floor; }
-    void setTotalFloors( int floor ) { this->m_floor_total = floor; }
+    void setTotalFloors( int floor ) { this->m_floorTotal = floor; }
     void setDescription( const QString &description ) { this->m_description = description; }
     void setLink( const QString &link ) { this->m_link = link; }
     void setAddress( const QString &address ) { this->m_address = address; }
@@ -57,11 +54,11 @@ public slots:
     void parseRawXML( const QString &data );
 
 private:
-    int m_rooms;
-    int m_price;
-    int m_area;
-    int m_floor;
-    int m_floor_total;
+    int m_rooms = 0;
+    int m_price = 0;
+    int m_area = 0;
+    int m_floor = 0;
+    int m_floorTotal = 0;
     QString m_description;
     QString m_link;
     QString m_address;

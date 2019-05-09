@@ -24,12 +24,105 @@
 #include <QApplication>
 #include <QLoggingCategory>
 #include <QTranslator>
-//#include <QDebug>
+#include "settings.h"
 
 //
 // defines
 //
 #define FORCE_LATVIAN
+
+/**
+ * @brief Main::~Main
+ */
+Main::~Main() {
+    this->storeListings();
+    this->filters.clear();
+    this->listings.clear();
+}
+
+/**
+ * @brief Main::storeListings
+ * @param path
+ */
+void Main::storeListings( const QString &path ) {
+    QFile xmlFile( path );
+
+    if ( xmlFile.open( QFile::ReadWrite | QFile::Truncate )) {
+        xmlFile.write( "<listings version=\"1.0\">\n" );
+
+        foreach ( const Listing &listing, this->listings ) {
+            xmlFile.write( QString( "<listing rooms=\"%1\" price=\"%2\" area=\"%3\" floor=\"%4\" total=\"%5\" description=\"%6\" link=\"%7\" address=\"%8\" date=\"%9\" />\n" )
+                           .arg( listing.rooms())
+                           .arg( listing.price())
+                           .arg( listing.area())
+                           .arg( listing.floor())
+                           .arg( listing.totalFloors())
+                           .arg( listing.description())
+                           .arg( listing.link())
+                           .arg( listing.address())
+                           .arg( listing.dateTime().toString( "dd.MM.yyyy hh:mm" )).toUtf8()
+                           );
+        }
+
+        xmlFile.write( "</listings>\n" );
+        xmlFile.close();
+    }
+}
+
+/**
+ * @brief Main::readListings
+ * @param path
+ */
+void Main::readListings( const QString &path ) {
+    QFile xmlFile( path );
+
+    this->listings.clear();
+
+    if ( xmlFile.open( QFile::ReadOnly )) {
+        QXmlStreamReader xml;
+        xml.addData( xmlFile.readAll());
+
+        if ( xml.readNextStartElement()) {
+            if ( xml.name() == "listings" && xml.attributes().value( "version" ) == "1.0" ) {
+                while ( xml.readNextStartElement()) {
+                    if ( xml.name() == "listing" ) {
+                        Listing listing;
+
+                        listing.setRooms( xml.attributes().value( "rooms" ).toInt());
+                        listing.setPrice( xml.attributes().value( "price" ).toInt());
+                        listing.setArea( xml.attributes().value( "area" ).toInt());
+                        listing.setFloor( xml.attributes().value( "floor" ).toInt());
+                        listing.setTotalFloors( xml.attributes().value( "total" ).toInt());
+                        listing.setDescription( xml.attributes().value( "description" ).toString());
+                        listing.setLink( xml.attributes().value( "link" ).toString());
+                        listing.setAddress( xml.attributes().value( "address" ).toString());
+                        listing.setDateTime( QDateTime::fromString( xml.attributes().value( "date" ).toString(), "dd.MM.yyyy hh:mm" ));
+
+                        // check for duplicates
+                        bool found = false;
+                        foreach ( const Listing &l, this->listings ) {
+                            if ( !QString::compare( l.link(), listing.link()))
+                                found = true;
+                        }
+
+                        if ( !found )
+                            this->listings << listing;
+
+                        xml.readNext();
+                    } else
+                        xml.skipCurrentElement();
+                }
+            } else
+                xml.raiseError( this->tr( "invalid file or version" ));
+        }
+
+        // close file
+        xmlFile.close();
+
+        // fill listings
+        MainWindow::instance()->fillListings();
+    }
+}
 
 /**
  * @brief qMain
@@ -40,28 +133,28 @@
 int main( int argc, char *argv[] ) {
     QApplication app( argc, argv );
 
-    // set up settings
-    Main::instance()->settings = new QSettings( "Factory12", "FindAFlat" );
-
     // set up translator
     QTranslator translator;
-    QString locale;
 #ifndef FORCE_LATVIAN
-    locale = QLocale::system().name();
+    const QString locale( QLocale::system().name());
 #else
-    locale = "lv_LV";
+    const QString locale( "lv_LV" );
 #endif
-    translator.load( ":/i18n/" + locale );
-    app.installTranslator( &translator );
+    if ( translator.load( ":/i18n/" + locale ))
+        app.installTranslator( &translator );
 
     // set up gui
-    MainWindow gui;
-    gui.show();
+    MainWindow::instance()->show();
+    MainWindow::instance()->setupFilters();
+
+    // ignore ssl warnings
     QLoggingCategory::setFilterRules( "qt.network.ssl.warning=false" );
 
-    // clean up
+    // clean up on exit
     QObject::connect( qApp, &QApplication::aboutToQuit, []() {
+        delete Settings::instance();
         delete Main::instance();
+        delete MainWindow::instance();
     } );
 
     // exec

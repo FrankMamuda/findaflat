@@ -20,6 +20,7 @@
 // includes
 //
 #include "filtermodel.h"
+#include "mainwindow.h"
 
 /**
  * @brief FilterModel::data
@@ -31,18 +32,23 @@ QVariant FilterModel::data( const QModelIndex &index, int role ) const {
     if ( !index.isValid())
         return QVariant();
 
-    if ( index.row() >= Main::instance()->filterList.count())
+    if ( index.row() >= Main::instance()->filters.count())
         return QVariant();
 
     if ( role == Qt::DisplayRole ) {
-        const Filter *filter( Main::instance()->filterList.at( index.row()));
+        const Filter &filter( Main::instance()->filters.at( index.row()));
 
         return this->tr( "Rooms %1-%2, floor-%3, area %4-%5, price EUR %6-%7" )
-                .arg( filter->roomsMin()).arg( filter->roomsMax())
-                .arg( filter->floorMin())
-                .arg( filter->areaMin()).arg( filter->areaMax())
-                .arg( filter->priceMin()).arg( filter->priceMax());
+                .arg( filter.roomsMin()).arg( filter.roomsMax())
+                .arg( filter.floorMin())
+                .arg( filter.areaMin()).arg( filter.areaMax())
+                .arg( filter.priceMin()).arg( filter.priceMax());
     }
 
     return QVariant();
+}
+
+void FilterModel::endReset() {
+    this->endResetModel();
+    MainWindow::instance()->checkButtonStates();
 }

@@ -7,13 +7,17 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     filter.cpp \
     filtermodel.cpp \
-    listing.cpp
+    listing.cpp \
+    settings.cpp \
+    listingmodel.cpp
 
 HEADERS  += mainwindow.h \
     main.h \
     filter.h \
     filtermodel.h \
-    listing.h
+    listing.h \
+    settings.h \
+    listingmodel.h
 
 FORMS    += mainwindow.ui
 
