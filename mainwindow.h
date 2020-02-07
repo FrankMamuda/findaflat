@@ -69,6 +69,8 @@ public slots:
     void fillListings();
     void setupFilters();
     void checkButtonStates();
+    void sendNotificationToFirebase( const QString &message );
+    void sendDataToFirebase( const QString &name, const QString &url, const QString &imageUrl );
 
 private slots:
     void replyReceived( QNetworkReply *reply );
@@ -109,6 +111,9 @@ private:
     int roomsMin() const { return this->ui->valueMinRooms->value(); }
     int roomsMax() const { return this->ui->valueMaxRooms->value(); }
     QString url() const { return this->ui->urlRSS->text(); }
+    bool notificationsEnabled() const { return this->ui->notificationsCheck->isChecked(); }
+    QString token() const { return this->ui->tokenEdit->text(); }
+    QString topic() const { return this->ui->topicEdit->text(); }
 
     // table
     ListingModel *listingModel = new ListingModel( this );

@@ -36,6 +36,9 @@ Settings::~Settings() {
     this->setValue( "filter/minRooms", MainWindow::instance()->roomsMin());
     this->setValue( "filter/maxRooms", MainWindow::instance()->roomsMax());
     this->setValue( "filter/url", MainWindow::instance()->url());
+    this->setValue( "notifications/enabled", MainWindow::instance()->notificationsEnabled());
+    this->setValue( "notifications/token", MainWindow::instance()->token());
+    this->setValue( "notifications/topic", MainWindow::instance()->topic());
 
     // store filters
     int y = 0;

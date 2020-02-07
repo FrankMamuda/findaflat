@@ -74,6 +74,9 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
     this->ui->valueMinRooms->setValue( Settings::instance()->value( "filter/minRooms", Ui::DefaultMinRooms ).toInt());
     this->ui->valueMaxRooms->setValue( Settings::instance()->value( "filter/maxRooms", Ui::DefaultMaxRooms ).toInt());
     this->ui->urlRSS->setText( Settings::instance()->value( "filter/url", Ui::DefaultURL ).toString());
+    this->ui->notificationsCheck->setChecked( Settings::instance()->value( "notifications/enabled", false ).toBool());
+    this->ui->tokenEdit->setText( Settings::instance()->value( "notifications/token", "" ).toString());
+    this->ui->topicEdit->setText( Settings::instance()->value( "notifications/topic", "" ).toString());
 
     // report
     this->statusBar()->showMessage( this->tr( "Search has not been started" ));
@@ -199,6 +202,8 @@ void MainWindow::replyReceived( QNetworkReply *networkReply ) {
 
         // parse rss
         this->parseRSS();
+    } else {
+        qDebug() << "ERROR" << networkReply->error() << networkReply->readAll() << networkReply->errorString() << QSslSocket::sslLibraryBuildVersionString();
     }
 
     // update statusbar
@@ -383,6 +388,64 @@ void MainWindow::checkButtonStates() {
     this->ui->actionSearch->setEnabled( hasFilters );
     this->ui->removeAllButton->setEnabled( hasFilters );
     this->ui->removeButton->setEnabled( hasFilters && this->ui->filterView->currentIndex().isValid());
+}
+
+/**
+ * @brief MainWindow::sendNotificationToFirebase
+ */
+void MainWindow::sendNotificationToFirebase( const QString &message ) {
+    if ( !this->ui->notificationsCheck->isChecked())
+        return;
+
+    const QString token( this->ui->tokenEdit->text());
+    const QString topic( this->ui->topicEdit->text());
+
+    if ( token.isEmpty() || topic.isEmpty() || message.isEmpty())
+        return;
+
+    const QByteArray postData( QString( "{\"to\":\"/topics/%1\",\"notification\":{\"body\":\"%2\"}, \"priority\": \"normal\" }" ).arg( topic ).arg( message ).toLocal8Bit());
+    const QUrl url( "https://fcm.googleapis.com/fcm/send" );
+    QNetworkRequest request;
+
+    request.setUrl( url );
+    request.setHeader( QNetworkRequest::ContentTypeHeader, "application/json" );
+    request.setRawHeader( "Authorization", QString( "key=%1" ).arg( this->ui->tokenEdit->text()).toLocal8Bit());
+
+    this->manager->post( qAsConst( request ), postData );
+}
+
+/**
+ * @brief MainWindow::sendDataToFirebase
+ * @param message
+ */
+void MainWindow::sendDataToFirebase( const QString &name, const QString &url, const QString &imageUrl ) {
+    if ( !this->ui->notificationsCheck->isChecked())
+        return;
+
+    const QString token( this->ui->tokenEdit->text());
+    const QString topic( this->ui->topicEdit->text());
+
+    if ( token.isEmpty() || topic.isEmpty() || name.isEmpty())
+        return;
+
+    const QByteArray postData( QString( "{\"to\":\"/topics/%1\",\"data\":{"
+                                        "\"title\": \"%2\","
+                                        "\"url\": \"%3\","
+                                        "\"image\": \"%4\""
+                                        "\"description\": \"Generic description\""
+                                        "}, \"priority\": \"normal\" }" )
+                               .arg( topic )
+                               .arg( name )
+                               .arg( url )
+                               .arg( imageUrl )
+                               .toLocal8Bit());
+    QNetworkRequest request;
+
+    request.setUrl( QUrl( "https://fcm.googleapis.com/fcm/send" ));
+    request.setHeader( QNetworkRequest::ContentTypeHeader, "application/json" );
+    request.setRawHeader( "Authorization", QString( "key=%1" ).arg( this->ui->tokenEdit->text()).toLocal8Bit());
+
+    this->manager->post( qAsConst( request ), postData );
 }
 
 /**

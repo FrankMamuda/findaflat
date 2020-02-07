@@ -27,3 +27,7 @@ RESOURCES += \
 win32:RC_FILE = icon.rc
 
 TRANSLATIONS = i18n_lv_LV.ts
+
+# NOTE: using libs from https://bintray.com/vszakats/generic/openssl
+win32:INCLUDEPATH += C:/openssl-win64/include/openssl
+win32:LIBS += -LC:/openssl-win64/lib -lcrypto -lssl
