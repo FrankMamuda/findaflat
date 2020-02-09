@@ -40,10 +40,12 @@ public:
     int totalFloors() const { return this->m_floorTotal; }
     QString description() const { return this->m_description; }
     QString link() const { return this->m_link; }
+    QString imageURL() const { return this->m_imageURL; }
     QString address() const { return this->m_address; }
     QDateTime dateTime() const { return this->m_dateTime; }
     void setRooms( int rooms ) { this->m_rooms = rooms; }
     void setPrice( int price ) { this->m_price = price; }
+    void setImageURL( const QString &url ) { this->m_imageURL = url; }
     void setArea( int area ) { this->m_area = area; }
     void setFloor( int floor ) { this->m_floor = floor; }
     void setTotalFloors( int floor ) { this->m_floorTotal = floor; }
@@ -63,5 +65,6 @@ private:
     QString m_link;
     QString m_address;
     QDateTime m_dateTime;
+    QString m_imageURL;
     QVariant readData( const QString &data, const QString &pattern ) const;
 };

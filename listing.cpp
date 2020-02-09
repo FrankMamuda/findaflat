@@ -59,4 +59,5 @@ void Listing::parseRawXML( const QString &data ) {
     this->setFloor( this->readData( simplified, "Stāvs:\\s+(\\d+).(\\d+)<" ).toInt());
     this->setAddress( this->readData( simplified, "Iela:\\s+([^<]+)<" ).toString());
     this->setPrice( this->readData( simplified, "Cena:\\s+(\\d+)" ).toInt());
+    this->setImageURL( this->readData( simplified, "(https:\\/\\/i\\.ss\\.com\\/gallery\\/\\d+\\/\\d+\\/\\d+\\/[a-zA-Z0-9\\-]+\\.t\\.jpg)" ).toString());
 }

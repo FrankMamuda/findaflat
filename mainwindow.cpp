@@ -97,6 +97,8 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
 
     // connect to RSS resource
     this->connect( this->manager, SIGNAL( finished( QNetworkReply * )), this, SLOT( replyReceived( QNetworkReply * )));
+
+    //this->sendDataToFirebase( "Juglasciema 44", "https://www.ss.com/msg/lv/real-estate/flats/riga/breksi/cxcoeb.html", "https://i.ss.com/gallery/4/616/153870/flats-riga-breksi-30773919.t.jpg" );
 }
 
 /**
@@ -118,6 +120,7 @@ void MainWindow::parseRSS() {
     QString tag;
     Listing listing;
     int count = 0;
+    QList<Listing> fresh;
 
     // announce
     while ( !this->xml.atEnd()) {
@@ -159,6 +162,7 @@ void MainWindow::parseRSS() {
 
                     if ( !dup ) {
                         Main::instance()->listings << listing;
+                        fresh << listing;
                         count++;
                     }
                 }
@@ -187,6 +191,17 @@ void MainWindow::parseRSS() {
 
         // update table
         this->fillListings();
+    }
+
+    //qDebug() << "FRESH" << fresh.count();
+    foreach ( const Listing &listing, fresh ) {
+        const QString description( QString( "%1 rooms, %2 floor, %3 m2. EUR %4" )
+                                   .arg( listing.rooms())
+                                   .arg( listing.floor())
+                                   .arg( listing.area())
+                                   .arg( listing.price()));
+
+        this->sendDataToFirebase( listing.address(), description, listing.link(), listing.imageURL());
     }
 }
 
@@ -418,7 +433,7 @@ void MainWindow::sendNotificationToFirebase( const QString &message ) {
  * @brief MainWindow::sendDataToFirebase
  * @param message
  */
-void MainWindow::sendDataToFirebase( const QString &name, const QString &url, const QString &imageUrl ) {
+void MainWindow::sendDataToFirebase( const QString &name, const QString &description, const QString &url, const QString &imageUrl ) {
     if ( !this->ui->notificationsCheck->isChecked())
         return;
 
@@ -432,12 +447,13 @@ void MainWindow::sendDataToFirebase( const QString &name, const QString &url, co
                                         "\"title\": \"%2\","
                                         "\"url\": \"%3\","
                                         "\"image\": \"%4\""
-                                        "\"description\": \"Generic description\""
+                                        "\"description\": \"%5\""
                                         "}, \"priority\": \"normal\" }" )
                                .arg( topic )
                                .arg( name )
                                .arg( url )
                                .arg( imageUrl )
+                               .arg( description )
                                .toLocal8Bit());
     QNetworkRequest request;
 

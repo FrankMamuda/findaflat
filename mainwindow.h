@@ -70,7 +70,7 @@ public slots:
     void setupFilters();
     void checkButtonStates();
     void sendNotificationToFirebase( const QString &message );
-    void sendDataToFirebase( const QString &name, const QString &url, const QString &imageUrl );
+    void sendDataToFirebase( const QString &name, const QString &description, const QString &url, const QString &imageUrl );
 
 private slots:
     void replyReceived( QNetworkReply *reply );
