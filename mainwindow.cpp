@@ -97,8 +97,6 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::M
 
     // connect to RSS resource
     this->connect( this->manager, SIGNAL( finished( QNetworkReply * )), this, SLOT( replyReceived( QNetworkReply * )));
-
-    //this->sendDataToFirebase( "Juglasciema 44", "https://www.ss.com/msg/lv/real-estate/flats/riga/breksi/cxcoeb.html", "https://i.ss.com/gallery/4/616/153870/flats-riga-breksi-30773919.t.jpg" );
 }
 
 /**
